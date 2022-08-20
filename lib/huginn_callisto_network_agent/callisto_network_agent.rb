@@ -46,11 +46,11 @@ module Agents
     form_configurable :emit_events, type: :boolean
     form_configurable :expected_receive_period_in_days, type: :string
     form_configurable :changes_only, type: :boolean
-    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward']
+    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward', 'get_tokens_balance']
     form_configurable :wallet, type: :string
     form_configurable :rpc_server, type: :string
     def validate_options
-      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward).include?(interpolated['type'])
+      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward' 'get_tokens_balance'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward get_tokens_balance).include?(interpolated['type'])
 
       unless options['rpc_server'].present?
         errors.add(:base, "rpc_server is a required field")
@@ -107,6 +107,173 @@ module Agents
 
     end
 
+    def get_tokens_balance()
+
+      uri = URI.parse("#{interpolated['rpc_server']}")
+      request = Net::HTTP::Post.new(uri)
+      request.content_type = "application/json; charset=UTF-8"
+      request["Accept"] = "application/json, text/plain, */*"
+      request.body = JSON.dump([
+        {
+          "id" => "65b0be964fde4eacba0c993a7bd4caaa",
+          "jsonrpc" => "2.0",
+          "method" => "eth_call",
+          "params" => [
+            {
+              "to" => "0x1eAa43544dAa399b87EEcFcC6Fa579D5ea4A6187",
+              "data" => "0x70a08231000000000000000000000000#{interpolated['wallet'][2..-1]}"
+            },
+            "latest"
+          ]
+        },
+        {
+          "id" => "e2a10af788ec1d4afa57558a857b9319",
+          "jsonrpc" => "2.0",
+          "method" => "eth_call",
+          "params" => [
+            {
+              "to" => "0x6182d2cd59227c20B486a53976dcEeAF38e76Eed",
+              "data" => "0x70a08231000000000000000000000000#{interpolated['wallet'][2..-1]}"
+            },
+            "latest"
+          ]
+        },
+        {
+          "id" => "b4bef730614cb7cbc6585c7e963029d3",
+          "jsonrpc" => "2.0",
+          "method" => "eth_call",
+          "params" => [
+            {
+              "to" => "0xcC00860947035a26Ffe24EcB1301ffAd3a89f910",
+              "data" => "0x70a08231000000000000000000000000#{interpolated['wallet'][2..-1]}"
+            },
+            "latest"
+          ]
+        },
+        {
+          "id" => "dfab9e50ca9e48c1fb9f2ca9c009ea58",
+          "jsonrpc" => "2.0",
+          "method" => "eth_call",
+          "params" => [
+            {
+              "to" => "0xCC78D0A86B0c0a3b32DEBd773Ec815130F9527CF",
+              "data" => "0x70a08231000000000000000000000000#{interpolated['wallet'][2..-1]}"
+            },
+            "latest"
+          ]
+        },
+        {
+          "id" => "a891c856974b2c71d7b99f2c056585d6",
+          "jsonrpc" => "2.0",
+          "method" => "eth_call",
+          "params" => [
+            {
+              "to" => "0xbf6c50889d3a620eb42C0F188b65aDe90De958c4",
+              "data" => "0x70a08231000000000000000000000000#{interpolated['wallet'][2..-1]}"
+            },
+            "latest"
+          ]
+        },
+        {
+          "id" => "1b3b1a0f2c708f8c71bf3d94246ec698",
+          "jsonrpc" => "2.0",
+          "method" => "eth_call",
+          "params" => [
+            {
+              "to" => "0x9FaE2529863bD691B4A7171bDfCf33C7ebB10a65",
+              "data" => "0x70a08231000000000000000000000000#{interpolated['wallet'][2..-1]}"
+            },
+            "latest"
+          ]
+        },
+        {
+          "id" => "ab9c68381989f3e3e47fb163244d7bf2",
+          "jsonrpc" => "2.0",
+          "method" => "eth_call",
+          "params" => [
+            {
+              "to" => "0x83736D58F496afab4cF7D8453575ab59279810ec",
+              "data" => "0x70a08231000000000000000000000000#{interpolated['wallet'][2..-1]}"
+            },
+            "latest"
+          ]
+        }
+      ])
+      
+      req_options = {
+        use_ssl: uri.scheme == "https",
+      }
+      
+      response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+        http.request(request)
+      end
+
+      log_curl_output(response.code,response.body)
+
+      payload = JSON.parse(response.body)
+      fixed_payload = JSON.parse(response.body)
+
+      if interpolated['changes_only'] == 'true'
+        if payload.to_s != memory['get_tokens_balance']
+          if "#{memory['get_tokens_balance']}" == ''
+            payload.each do | token |
+              case token['id']
+              when "65b0be964fde4eacba0c993a7bd4caaa"
+                token['name'] = "Callisto Enterprise"
+                token['symbol'] = "CLOE"
+              when "1b3b1a0f2c708f8c71bf3d94246ec698"
+                token['name'] = "SOY Finance"
+                token['symbol'] = "SOY"
+              else
+                token['name'] = "Unknown"
+                token['symbol'] = "Unknown"
+              end
+              power = (10 ** 18).to_i
+              token['result'] = token['result'].to_i(16) / power.to_i.to_f
+              create_event payload: token
+            end
+          else
+            last_status = memory['get_tokens_balance'].gsub("=>", ": ").gsub(": nil,", ": null,")
+            last_status = JSON.parse(last_status)
+            payload.each do | token |
+              found = false
+              last_status.each do | tokenbis|
+                if token == tokenbis
+                  found = true
+                end
+              end
+              if found == false
+                case token['id']
+                when "65b0be964fde4eacba0c993a7bd4caaa"
+                  token['name'] = "Callisto Enterprise"
+                  token['symbol'] = "CLOE"
+                when "1b3b1a0f2c708f8c71bf3d94246ec698"
+                  token['name'] = "SOY Finance"
+                  token['symbol'] = "SOY"
+                else
+                  token['name'] = "Unknown"
+                  token['symbol'] = "Unknown"
+                end
+                power = (10 ** 18).to_i
+                token['result'] = token['result'].to_i(16) / power.to_i.to_f
+                create_event payload: token
+              end
+            end
+          end
+          memory['get_tokens_balance'] = fixed_payload.to_s
+        end
+      else
+        if payload.to_s != memory['get_tokens_balance']
+          memory['get_tokens_balance']= fixed_payload.to_s
+        end
+        power = (10 ** 18).to_i
+        payload.each do | token |
+          token['result'] = token['result'].to_i(16) / power.to_i.to_f
+          create_event payload: token
+        end
+      end
+    end
+
     def stake_reward()
 
       uri = URI.parse("#{interpolated['rpc_server']}")
@@ -142,14 +309,20 @@ module Agents
       if interpolated['changes_only'] == 'true'
         if payload.to_s != memory['stake_reward']
           memory['stake_reward'] = payload.to_s
-          payload[0]['result'] = payload[0]['result'].to_i(16)
+          if payload[0].key?("result")
+            payload[0]['result'] = payload[0]['result'].to_i(16)
+            payload[0]['name'] = "callisto"
+            payload[0]['symbol'] = "CLO"
+          end
           create_event payload: payload[0]
         end
       else
         if payload.to_s != memory['stake_reward']
           memory['stake_reward'] = payload.to_s
         end
-        payload['result'] = payload['result'].to_i(16)
+        payload[0]['result'] = payload[0]['result'].to_i(16)
+        payload[0]['name'] = "callisto"
+        payload[0]['symbol'] = "CLO"
         create_event payload: payload[0]
       end
     end
@@ -383,6 +556,8 @@ module Agents
         if payload.to_s != memory['get_balance']
           memory['get_balance'] = payload.to_s
           power = (10 ** 18).to_i
+          payload['name'] = "callisto"
+          payload['symbol'] = "CLO"
           payload['result'] = payload['result'].to_i(16) / power.to_i.to_f
           create_event payload: payload
         end
@@ -413,6 +588,8 @@ module Agents
         eth_getTransactionCount()
       when "stake_reward"
         stake_reward()
+      when "get_tokens_balance"
+        get_tokens_balance()
       else
         log "Error: type has an invalid value (#{type})"
       end
