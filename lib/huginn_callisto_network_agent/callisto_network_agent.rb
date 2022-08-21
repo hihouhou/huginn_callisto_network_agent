@@ -46,11 +46,11 @@ module Agents
     form_configurable :emit_events, type: :boolean
     form_configurable :expected_receive_period_in_days, type: :string
     form_configurable :changes_only, type: :boolean
-    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward', 'get_tokens_balance']
+    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward', 'get_tokens_balance', 'eth_getBlockByNumber']
     form_configurable :wallet, type: :string
     form_configurable :rpc_server, type: :string
     def validate_options
-      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward' 'get_tokens_balance'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward get_tokens_balance).include?(interpolated['type'])
+      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward' 'get_tokens_balance' 'eth_getBlockByNumber'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward get_tokens_balance eth_getBlockByNumber).include?(interpolated['type'])
 
       unless options['rpc_server'].present?
         errors.add(:base, "rpc_server is a required field")
@@ -105,6 +105,70 @@ module Agents
         log body
       end
 
+    end
+
+    def eth_getBlockByNumber()
+
+      uri = URI.parse("#{interpolated['rpc_server']}")
+      request = Net::HTTP::Post.new(uri)
+      request.content_type = "application/json"
+      request.body = JSON.dump({
+        "jsonrpc" => "2.0",
+        "method" => "eth_getBlockByNumber",
+        "params" => [
+          "latest",
+          false
+        ],
+        "id" => 1
+      })
+
+      req_options = {
+        use_ssl: uri.scheme == "https",
+      }
+
+      response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+        http.request(request)
+      end
+
+      log_curl_output(response.code,response.body)
+
+      payload = JSON.parse(response.body)
+
+      if interpolated['changes_only'] == 'true'
+        if payload.to_s != memory['eth_getBlockByNumber']
+          memory['eth_getBlockByNumber'] = payload.to_s
+          if payload.key?("result")
+            payload['result']['number'] = payload['result']['number'].to_i(16)
+            payload['result']['timestamp'] = payload['result']['timestamp'].to_i(16)
+            payload['result']['difficulty'] = payload['result']['difficulty'].to_i(16)
+            payload['result']['extraData'] = payload['result']['extraData'].to_i(16)
+            payload['result']['gasLimit'] = payload['result']['gasLimit'].to_i(16)
+            payload['result']['gasUsed'] = payload['result']['gasUsed'].to_i(16)
+            payload['result']['nonce'] = payload['result']['nonce'].to_i(16)
+            payload['result']['size'] = payload['result']['size'].to_i(16)
+            payload['result']['totalDifficulty'] = payload['result']['totalDifficulty'].to_i(16)
+            payload['result']['name'] = "callisto"
+            payload['result']['symbol'] = "CLO"
+          end
+          create_event payload: payload
+        end
+      else
+        if payload.to_s != memory['eth_getBlockByNumber']
+          memory['eth_getBlockByNumber'] = payload.to_s
+        end
+        payload['result']['number'] = payload['result']['number'].to_i(16)
+        payload['result']['timestamp'] = payload['result']['timestamp'].to_i(16)
+        payload['result']['difficulty'] = payload['result']['difficulty'].to_i(16)
+        payload['result']['extraData'] = payload['result']['extraData'].to_i(16)
+        payload['result']['gasLimit'] = payload['result']['gasLimit'].to_i(16)
+        payload['result']['gasUsed'] = payload['result']['gasUsed'].to_i(16)
+        payload['result']['nonce'] = payload['result']['nonce'].to_i(16)
+        payload['result']['size'] = payload['result']['size'].to_i(16)
+        payload['result']['totalDifficulty'] = payload['result']['totalDifficulty'].to_i(16)
+        payload['result']['name'] = "callisto"
+        payload['result']['symbol'] = "CLO"
+        create_event payload: payload
+      end
     end
 
     def get_tokens_balance()
@@ -590,6 +654,8 @@ module Agents
         stake_reward()
       when "get_tokens_balance"
         get_tokens_balance()
+      when "eth_getBlockByNumber"
+        eth_getBlockByNumber()
       else
         log "Error: type has an invalid value (#{type})"
       end
