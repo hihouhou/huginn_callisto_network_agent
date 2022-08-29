@@ -288,6 +288,9 @@ module Agents
               when "1b3b1a0f2c708f8c71bf3d94246ec698"
                 token['name'] = "SOY Finance"
                 token['symbol'] = "SOY"
+              when "a891c856974b2c71d7b99f2c056585d6"
+                token['name'] = "Bulls USD"
+                token['symbol'] = "BUSDT"
               else
                 token['name'] = "Unknown"
                 token['symbol'] = "Unknown"
