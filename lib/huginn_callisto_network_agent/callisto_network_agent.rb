@@ -46,11 +46,11 @@ module Agents
     form_configurable :emit_events, type: :boolean
     form_configurable :expected_receive_period_in_days, type: :string
     form_configurable :changes_only, type: :boolean
-    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards']
+    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards']
     form_configurable :wallet, type: :string
     form_configurable :rpc_server, type: :string
     def validate_options
-      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards).include?(interpolated['type'])
+      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards).include?(interpolated['type'])
 
       unless options['rpc_server'].present?
         errors.add(:base, "rpc_server is a required field")
@@ -105,6 +105,106 @@ module Agents
         log body
       end
 
+    end
+
+    def soy_farming_soy_btt_pending_rewards()
+
+      uri = URI.parse("#{interpolated['rpc_server']}")
+      request = Net::HTTP::Post.new(uri)
+      request.content_type = "application/json; charset=UTF-8"
+      request["Accept"] = "application/json, text/plain, */*"
+      request.body = JSON.dump([
+        {
+          "id" => "d21a3c1c25918de198ed446c67b5983f",
+          "jsonrpc" => "2.0",
+          "method" => "eth_call",
+          "params" => [
+            {
+              "to" => "0x8967a2adc0e1b7b0422426e350fe389a4745ec78",
+              "data" => "0xf40f0f52000000000000000000000000#{interpolated['wallet'][2..-1]}"
+            },
+            "latest"
+          ]
+        }
+      ])
+
+      req_options = {
+        use_ssl: uri.scheme == "https",
+      }
+
+      response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+        http.request(request)
+      end
+
+      log_curl_output(response.code,response.body)
+
+      payload = JSON.parse(response.body)
+
+      if interpolated['changes_only'] == 'true'
+        if payload.to_s != memory['soy_farming_soy_btt']
+          memory['soy_farming_soy_btt'] = payload.to_s
+          power = (10 ** 18).to_i
+          payload[0]['result'] = payload[0]['result'].to_i(16) / power.to_i.to_f
+          log payload
+          create_event payload: payload[0]
+        end
+      else
+        memory['soy_farming_soy_btt'] = payload.to_s
+        create_event payload: payload[0]
+      end
+    end
+
+    def stake_reward_soy()
+
+      uri = URI.parse("#{interpolated['rpc_server']}")
+      request = Net::HTTP::Post.new(uri)
+      request.content_type = "application/json"
+      request.body = JSON.dump([
+        {
+          "id" => "788b52b2b4c0b03223e11841036a32fe",
+          "jsonrpc" => "2.0",
+          "method" => "eth_call",
+          "params" => [
+            {
+              "to" => "0xeB4511C90F9387De8F8945ABD8C803d5cB275509",
+              "data" => "0xbf92b4ef000000000000000000000000#{interpolated['wallet'][2..-1]}"
+            },
+            "latest"
+          ]
+        }
+      ])
+
+      req_options = {
+        use_ssl: uri.scheme == "https",
+      }
+
+      response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+        http.request(request)
+      end
+
+      log_curl_output(response.code,response.body)
+
+      payload = JSON.parse(response.body)
+
+      if interpolated['changes_only'] == 'true'
+        if payload.to_s != memory['stake_reward_soy']
+          memory['stake_reward_soy'] = payload.to_s
+          if payload[0].key?("result")
+            payload[0]['result'] = payload[0]['result'].to_i(16)
+            payload[0]['name'] = "soy"
+            payload[0]['symbol'] = "SOY"
+          end
+          create_event payload: payload[0]
+        end
+      else
+        if payload.to_s != memory['stake_reward_soy']
+          memory['stake_reward_soy'] = payload.to_s
+        end
+        payload[0]['result'] = payload[0]['result'].to_i(16)
+        payload[0]['name'] = "soy"
+        payload[0]['symbol'] = "SOY"
+        create_event payload: payload[0]
+      end
     end
 
     def soy_farming_soy_clo_pending_rewards()
@@ -771,6 +871,10 @@ module Agents
         soy_farming_soy_clo_pending_rewards()
       when "soy_farming_soy_cloe_pending_rewards"
         soy_farming_soy_cloe_pending_rewards()
+      when "stake_reward_soy"
+        stake_reward_soy()
+      when "soy_farming_soy_btt_pending_rewards"
+        soy_farming_soy_btt_pending_rewards()
       else
         log "Error: type has an invalid value (#{type})"
       end
