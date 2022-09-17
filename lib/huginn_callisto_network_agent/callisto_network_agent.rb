@@ -190,7 +190,8 @@ module Agents
         if payload.to_s != memory['stake_reward_soy']
           memory['stake_reward_soy'] = payload.to_s
           if payload[0].key?("result")
-            payload[0]['result'] = payload[0]['result'].to_i(16)
+            power = (10 ** 18).to_i
+            payload[0]['result'] = payload[0]['result'].to_i(16) / power.to_i.to_f
             payload[0]['name'] = "soy"
             payload[0]['symbol'] = "SOY"
           end
@@ -200,7 +201,8 @@ module Agents
         if payload.to_s != memory['stake_reward_soy']
           memory['stake_reward_soy'] = payload.to_s
         end
-        payload[0]['result'] = payload[0]['result'].to_i(16)
+        power = (10 ** 18).to_i
+        payload[0]['result'] = payload[0]['result'].to_i(16) / power.to_i.to_f
         payload[0]['name'] = "soy"
         payload[0]['symbol'] = "SOY"
         create_event payload: payload[0]
