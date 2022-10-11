@@ -46,11 +46,11 @@ module Agents
     form_configurable :emit_events, type: :boolean
     form_configurable :expected_receive_period_in_days, type: :string
     form_configurable :changes_only, type: :boolean
-    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards']
+    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards']
     form_configurable :wallet, type: :string
     form_configurable :rpc_server, type: :string
     def validate_options
-      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards).include?(interpolated['type'])
+      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards).include?(interpolated['type'])
 
       unless options['rpc_server'].present?
         errors.add(:base, "rpc_server is a required field")
@@ -105,6 +105,107 @@ module Agents
         log body
       end
 
+    end
+
+    def test_create(day,line,last_status,i)
+      power = (10 ** 18).to_i
+      history = (i - 1).step(last_status['result'][2..].chars.each_slice(64).map(&:join).size - 1, i).map { |b| last_status['result'][2..].chars.each_slice(64).map(&:join)[b] }
+      if interpolated['debug'] == 'true'
+        log "new -> #{line.to_i(16) / power.to_i.to_f} / history #{history[0].to_i(16) / power.to_i.to_f}"
+      end
+      if line != history[0]
+        create_event :payload => { 'wallet' => "#{interpolated['wallet']}", 'period_in_days' => "#{day}", 'pending_rewards' => "#{line.to_i(16) / power.to_i.to_f}"}
+      end
+    end
+
+    def soy_cs_pending_rewards()
+
+      uri = URI.parse("https://rpc.callisto.network/")
+      request = Net::HTTP::Post.new(uri)
+      request.content_type = "application/json"
+      request["Authority"] = "rpc.callisto.network"
+      request["Accept"] = "*/*"
+      request["Accept-Language"] = "fr;q=0.7"
+      request["Cache-Control"] = "no-cache"
+      request["Origin"] = "https://app.soy.finance"
+      request["Pragma"] = "no-cache"
+      request["Referer"] = "https://app.soy.finance/"
+      request["Sec-Fetch-Dest"] = "empty"
+      request["Sec-Fetch-Mode"] = "cors"
+      request["Sec-Fetch-Site"] = "cross-site"
+      request["Sec-Gpc"] = "1"
+      request["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36"
+      request.body = JSON.dump({
+        "jsonrpc" => "2.0",
+        "id" => 4043350105485278,
+        "method" => "eth_call",
+        "params" => [
+          {
+            "data" => "0x252dba420000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000160000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002a0000000000000000000000000000000000000000000000000000000000000034000000000000000000000000000000000000000000000000000000000000003e0000000000000000000000000ff9289c2656ca1d194dea1895aaf3278b744fa7000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000024f40f0f52000000000000000000000000#{interpolated['wallet'][2..-1]}0000000000000000000000000000000000000000000000000000000000000000000000000000000086f7e2ef599690b64f0063b3f978ea6ae2814f6300000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000024f40f0f52000000000000000000000000#{interpolated['wallet'][2..-1]}000000000000000000000000000000000000000000000000000000000000000000000000000000007d6c70b6561c31935e6b0dd77731fc63d5ac37f200000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000024f40f0f52000000000000000000000000#{interpolated['wallet'][2..-1]}0000000000000000000000000000000000000000000000000000000000000000000000000000000019dcb402162b6937a8aceac87ed6c05219c9bef700000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000024f40f0f52000000000000000000000000#{interpolated['wallet'][2..-1]}0000000000000000000000000000000000000000000000000000000000000000000000000000000031bff88c6124e1622f81b3ba7ed219e5d78abd9800000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000024f40f0f52000000000000000000000000#{interpolated['wallet'][2..-1]}00000000000000000000000000000000000000000000000000000000000000000000000000000000eb4511c90f9387de8f8945abd8c803d5cb27550900000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000024bf92b4ef000000000000000000000000#{interpolated['wallet'][2..-1]}00000000000000000000000000000000000000000000000000000000",
+            "to" => "0x3c4127a01b75e3741dd40a7a044bc70e3ed4e77c"
+          },
+          "latest"
+        ]
+      })
+
+      req_options = {
+        use_ssl: uri.scheme == "https",
+      }
+
+      response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+        http.request(request)
+      end
+
+      log_curl_output(response.code,response.body)
+
+      payload = JSON.parse(response.body)
+
+      if interpolated['changes_only'] == 'true'
+        if payload.to_s != memory['soy_cs_pending_rewards']
+          i = 0
+          last_status = memory['soy_cs_pending_rewards'].gsub("=>", ": ").gsub(": nil,", ": null,")
+          last_status = JSON.parse(last_status)
+          payload['result'][2..].chars.each_slice(64).map(&:join).each do |line|
+            i = i + 1
+            case i
+            when 11
+              day = 7
+              if interpolated['debug'] == 'true'
+                log "for #{day} days"
+              end
+              test_create(day,line,last_status,i)
+            when 13
+              day = 30
+              if interpolated['debug'] == 'true'
+                log "for #{day} days"
+              end
+              test_create(day,line,last_status,i)
+            when 15
+              day = 91
+              if interpolated['debug'] == 'true'
+                log "for #{day} days"
+              end
+              test_create(day,line,last_status,i)
+            when 17
+              day = 182
+              if interpolated['debug'] == 'true'
+                log "for #{day} days"
+              end
+              test_create(day,line,last_status,i)
+            when 19
+              day = 365
+              if interpolated['debug'] == 'true'
+                log "for #{day} days"
+              end
+              test_create(day,line,last_status,i)
+            end
+            memory['soy_cs_pending_rewards'] = payload.to_s
+          end
+        end
+      else
+        memory['soy_cs_pending_rewards'] = payload.to_s
+        create_event payload: payload[0]
+      end
     end
 
     def soy_farming_soy_btt_pending_rewards()
@@ -877,6 +978,8 @@ module Agents
         stake_reward_soy()
       when "soy_farming_soy_btt_pending_rewards"
         soy_farming_soy_btt_pending_rewards()
+      when "soy_cs_pending_rewards"
+        soy_cs_pending_rewards()
       else
         log "Error: type has an invalid value (#{type})"
       end
