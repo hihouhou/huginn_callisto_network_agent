@@ -46,11 +46,11 @@ module Agents
     form_configurable :emit_events, type: :boolean
     form_configurable :expected_receive_period_in_days, type: :string
     form_configurable :changes_only, type: :boolean
-    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards']
+    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards']
     form_configurable :wallet, type: :string
     form_configurable :rpc_server, type: :string
     def validate_options
-      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards).include?(interpolated['type'])
+      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards).include?(interpolated['type'])
 
       unless options['rpc_server'].present?
         errors.add(:base, "rpc_server is a required field")
@@ -652,7 +652,7 @@ module Agents
       end
     end
 
-    def stake_reward()
+    def stake_reward_clo()
 
       uri = URI.parse("#{interpolated['rpc_server']}")
       request = Net::HTTP::Post.new(uri)
@@ -685,20 +685,22 @@ module Agents
       payload = JSON.parse(response.body)
 
       if interpolated['changes_only'] == 'true'
-        if payload.to_s != memory['stake_reward']
-          memory['stake_reward'] = payload.to_s
+        if payload.to_s != memory['stake_reward_clo']
+          memory['stake_reward_clo'] = payload.to_s
           if payload[0].key?("result")
-            payload[0]['result'] = payload[0]['result'].to_i(16)
+            power = (10 ** 18).to_i
+            payload[0]['result'] = payload[0]['result'].to_i(16) / power.to_i.to_f
             payload[0]['name'] = "callisto"
             payload[0]['symbol'] = "CLO"
           end
           create_event payload: payload[0]
         end
       else
-        if payload.to_s != memory['stake_reward']
-          memory['stake_reward'] = payload.to_s
+        if payload.to_s != memory['stake_reward_clo']
+          memory['stake_reward_clo'] = payload.to_s
         end
-        payload[0]['result'] = payload[0]['result'].to_i(16)
+        power = (10 ** 18).to_i
+        payload[0]['result'] = payload[0]['result'].to_i(16) / power.to_i.to_f
         payload[0]['name'] = "callisto"
         payload[0]['symbol'] = "CLO"
         create_event payload: payload[0]
@@ -964,8 +966,8 @@ module Agents
         eth_gasPrice()
       when "eth_getTransactionCount"
         eth_getTransactionCount()
-      when "stake_reward"
-        stake_reward()
+      when "stake_reward_clo"
+        stake_reward_clo()
       when "get_tokens_balance"
         get_tokens_balance()
       when "eth_getBlockByNumber"
