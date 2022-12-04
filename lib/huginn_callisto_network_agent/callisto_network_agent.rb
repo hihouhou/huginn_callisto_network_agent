@@ -12,6 +12,12 @@ module Agents
 
       The `wallet` is needed for interaction about balance for example.
 
+      The `wallet_password` is needed for unlocking a wallet when you want to send CLO.
+
+      The `value` is needed when you want to send CLO.
+
+      The `wallet_dest` is needed  when you want to send CLO.
+
       The `debug` can add verbosity.
 
       The `rpc_server` is needed for interaction with the api (per default thenode from callisto.network)
@@ -38,6 +44,9 @@ module Agents
         'debug' => 'false',
         'emit_events' => 'true',
         'expected_receive_period_in_days' => '2',
+        'wallet_password' => '',
+        'value' => '',
+        'wallet_dest' => '',
         'changes_only' => 'true'
       }
     end
@@ -46,17 +55,32 @@ module Agents
     form_configurable :emit_events, type: :boolean
     form_configurable :expected_receive_period_in_days, type: :string
     form_configurable :changes_only, type: :boolean
-    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards']
+    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx']
     form_configurable :wallet, type: :string
     form_configurable :rpc_server, type: :string
+    form_configurable :wallet_password, type: :string
+    form_configurable :value, type: :string
+    form_configurable :wallet_dest, type: :string
     def validate_options
-      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards).include?(interpolated['type'])
+      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx).include?(interpolated['type'])
+
+      unless options['wallet_password'].present? || !['clo_sendtx'].include?(options['type'])
+        errors.add(:base, "wallet_password is a required field")
+      end
+
+      unless options['value'].present? || !['clo_sendtx'].include?(options['type'])
+        errors.add(:base, "value is a required field")
+      end
+
+      unless options['wallet_dest'].present? || !['clo_sendtx'].include?(options['type'])
+        errors.add(:base, "wallet_dest is a required field")
+      end
 
       unless options['rpc_server'].present?
         errors.add(:base, "rpc_server is a required field")
       end
 
-      unless options['wallet'].present?
+      unless options['wallet'].present? || !['get_balance' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx'].include?(options['type'])
         errors.add(:base, "wallet is a required field")
       end
 
@@ -105,6 +129,79 @@ module Agents
         log body
       end
 
+    end
+
+    def unlock_wallet()
+      uri = URI.parse("#{interpolated['rpc_server']}")
+      request = Net::HTTP::Post.new(uri)
+      request.content_type = "application/json;charset=UTF-8"
+      request["Accept"] = "application/json, text/plain, /"
+      request["Cache-Control"] = "no-cache"
+      request.body = JSON.dump({
+        "jsonrpc" => "2.0",
+        "method" => "personal_unlockAccount",
+        "params" => [
+          "#{interpolated['wallet']}",
+          "#{interpolated['wallet_password']}",
+          15
+        ],
+        "id" => 67
+      })
+
+      req_options = {
+        use_ssl: uri.scheme == "https",
+      }
+
+      response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+        http.request(request)
+      end
+
+      log_curl_output(response.code,response.body)
+      return response.body
+
+    end
+
+    def clo_sendtx()
+      if interpolated['debug'] == 'true'
+        log "unlocking the wallet"
+      end
+      response = JSON.parse(unlock_wallet())
+      log "response -> #{response}"
+      log "response result -> #{response['result']}"
+      if response['result'] == true
+        if interpolated['debug'] == 'true'
+          log "the wallet is unlocked"
+        end
+        uri = URI.parse("#{interpolated['rpc_server']}")
+        request = Net::HTTP::Post.new(uri)
+        request.content_type = "application/json; charset=UTF-8"
+        request.body = JSON.dump({
+          "jsonrpc" => "2.0",
+          "method" => "eth_sendTransaction",
+          "params" => [
+            {
+              "from" => "#{interpolated['wallet']}",
+              "to" => "#{interpolated['wallet_dest']}",
+              "value" => "0x#{interpolated['value'].to_i.to_s(16)}"
+            }
+          ],
+          "id" => 1
+        })
+
+        req_options = {
+          use_ssl: uri.scheme == "https",
+        }
+
+        response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+          http.request(request)
+        end
+
+        log_curl_output(response.code,response.body)
+
+        if interpolated['emit_events'] == 'true'
+          create_event payload: response.body
+        end
+      end
     end
 
     def test_create(day,line,last_status,i)
@@ -982,6 +1079,8 @@ module Agents
         soy_farming_soy_btt_pending_rewards()
       when "soy_cs_pending_rewards"
         soy_cs_pending_rewards()
+      when "clo_sendtx"
+        clo_sendtx()
       else
         log "Error: type has an invalid value (#{type})"
       end
