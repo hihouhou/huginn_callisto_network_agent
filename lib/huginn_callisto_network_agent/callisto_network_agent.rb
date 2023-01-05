@@ -47,7 +47,9 @@ module Agents
         'wallet_password' => '',
         'value' => '',
         'wallet_dest' => '',
-        'changes_only' => 'true'
+        'changes_only' => 'true',
+        'filter_for_method_id' => '',
+        'last_block' => ''
       }
     end
 
@@ -55,14 +57,16 @@ module Agents
     form_configurable :emit_events, type: :boolean
     form_configurable :expected_receive_period_in_days, type: :string
     form_configurable :changes_only, type: :boolean
-    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx']
+    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx', 'get_tx_by_address_with_filter']
     form_configurable :wallet, type: :string
     form_configurable :rpc_server, type: :string
     form_configurable :wallet_password, type: :string
     form_configurable :value, type: :string
     form_configurable :wallet_dest, type: :string
+    form_configurable :filter_for_method_id, type: :string
+    form_configurable :last_block, type: :string
     def validate_options
-      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx).include?(interpolated['type'])
+      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx get_tx_by_address_with_filter).include?(interpolated['type'])
 
       unless options['wallet_password'].present? || !['clo_sendtx'].include?(options['type'])
         errors.add(:base, "wallet_password is a required field")
@@ -80,8 +84,12 @@ module Agents
         errors.add(:base, "rpc_server is a required field")
       end
 
-      unless options['wallet'].present? || !['get_balance' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx'].include?(options['type'])
+      unless options['wallet'].present? || !['get_balance' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter'].include?(options['type'])
         errors.add(:base, "wallet is a required field")
+      end
+
+      unless options['last_block'].present? || !['get_tx_by_address_with_filter'].include?(options['type'])
+        errors.add(:base, "last_block is a required field")
       end
 
       if options.has_key?('emit_events') && boolify(options['emit_events']).nil?
@@ -127,6 +135,88 @@ module Agents
       if interpolated['debug'] == 'true'
         log "body"
         log body
+      end
+
+    end
+
+    def find_call_name(id)
+
+      case id
+      when "0xb88a802f"
+        found_name = 'claimReward'
+      when "0xe80233c6"
+        found_name = 'activateNode'
+      when "0x65814455"
+        found_name = 'deactivateNode'
+      when "0xb199892a"
+        found_name = 'addNode'
+      when "0xcdfdb7dc"
+        found_name = 'setRatios'
+      when "0x01026099"
+        found_name = 'addTokens'
+      when "0xb2b99ec9"
+        found_name = 'removeNode'
+      when "0x095ea7b3"
+        found_name = 'approve'
+      else
+        found_name = 'unknown'
+      end
+      return found_name
+    end
+
+
+    def get_data(x)
+      hexa_block = x.to_s(16)
+      uri = URI.parse("#{interpolated['rpc_server']}")
+      request = Net::HTTP::Post.new(uri)
+      request.content_type = "application/json"
+      request.body = JSON.dump({
+        "jsonrpc" => "2.0",
+        "method" => "eth_getBlockByNumber",
+        "params" => [
+          "0x#{hexa_block}",
+          true
+        ],
+        "id" => 1
+      })
+
+      req_options = {
+        use_ssl: uri.scheme == "https",
+      }
+
+      response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+        http.request(request)
+      end
+
+      log_curl_output(response.code,response.body)
+
+      tx = JSON.parse(response.body)
+      timestamp = tx['result']['timestamp'].to_i(16)
+      if ! tx['result']['transactions'].empty?
+        tx['result']['transactions'].each do |transaction|
+          if interpolated['filter_for_method_id'].empty? || interpolated['filter_for_method_id'].include?(transaction['input'][0, 10])
+            transaction['blockNumber'] = transaction['blockNumber'].to_i(16)
+            transaction['timestamp'] = timestamp
+            transaction['call_type'] = find_call_name(transaction['input'][0, 10])
+            create_event payload: transaction
+          end
+        end
+      end
+    end
+
+    def get_tx_by_address_with_filter()
+
+	  if !defined? memory['previous_block'] || !memory['previous_block'].empty
+        x = memory['previous_block'].to_i
+	  else
+		x = interpolated['last_block'].to_i
+	  end
+      y = interpolated['last_block'].to_i
+
+      while x <= y
+        get_data(x).to_s
+		memory['previous_block'] = x
+        x = x + 1
       end
 
     end
@@ -1081,6 +1171,8 @@ module Agents
         soy_cs_pending_rewards()
       when "clo_sendtx"
         clo_sendtx()
+      when "get_tx_by_address_with_filter"
+        get_tx_by_address_with_filter()
       else
         log "Error: type has an invalid value (#{type})"
       end
