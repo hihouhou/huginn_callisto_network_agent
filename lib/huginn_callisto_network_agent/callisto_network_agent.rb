@@ -194,11 +194,13 @@ module Agents
       timestamp = tx['result']['timestamp'].to_i(16)
       if ! tx['result']['transactions'].empty?
         tx['result']['transactions'].each do |transaction|
-          if interpolated['filter_for_method_id'].empty? || interpolated['filter_for_method_id'].include?(transaction['input'][0, 10])
-            transaction['blockNumber'] = transaction['blockNumber'].to_i(16)
-            transaction['timestamp'] = timestamp
-            transaction['call_type'] = find_call_name(transaction['input'][0, 10])
-            create_event payload: transaction
+          if transaction['from'].upcase == interpolated['wallet'].upcase || transaction['to'].upcase == interpolated['wallet'].upcase
+            if interpolated['filter_for_method_id'].empty? || interpolated['filter_for_method_id'].include?(transaction['input'][0, 10])
+              transaction['blockNumber'] = transaction['blockNumber'].to_i(16)
+              transaction['timestamp'] = timestamp
+              transaction['call_type'] = find_call_name(transaction['input'][0, 10])
+              create_event payload: transaction
+            end
           end
         end
       end
