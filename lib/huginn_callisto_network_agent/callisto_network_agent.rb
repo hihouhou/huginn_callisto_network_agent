@@ -192,9 +192,10 @@ module Agents
 
       tx = JSON.parse(response.body)
       timestamp = tx['result']['timestamp'].to_i(16)
-      if ! tx['result']['transactions'].empty?
+      if !tx['result']['transactions'].empty?
         tx['result']['transactions'].each do |transaction|
-          if transaction['from'].upcase == interpolated['wallet'].upcase || transaction['to'].upcase == interpolated['wallet'].upcase
+          if ( !transaction['from'].nil? && transaction['from'].upcase == interpolated['wallet'].upcase ) || ( !transaction['to'].nil? && transaction['to'].upcase == interpolated['wallet'].upcase )
+#          if transaction['from'].upcase == interpolated['wallet'].upcase || transaction['to'].upcase == interpolated['wallet'].upcase
             if interpolated['filter_for_method_id'].empty? || interpolated['filter_for_method_id'].include?(transaction['input'][0, 10])
               transaction['blockNumber'] = transaction['blockNumber'].to_i(16)
               transaction['timestamp'] = timestamp
@@ -208,15 +209,25 @@ module Agents
 
     def get_tx_by_address_with_filter()
 
-	  if !defined? memory['previous_block'] || !memory['previous_block'].empty
-        x = memory['previous_block'].to_i
-	  else
+	  if memory['previous_block'].blank? || !memory['previous_block'].present?
 		x = interpolated['last_block'].to_i
+        if interpolated['debug'] == 'true'
+          log "previous_block in memory is missing or empty"
+        end
+	  else
+        x = memory['previous_block'].to_i
+        x = x + 1
+        if interpolated['debug'] == 'true'
+          log "previous_block in memory is #{memory['previous_block']} so next batch will be #{x}"
+        end
 	  end
       y = interpolated['last_block'].to_i
 
       while x <= y
         get_data(x).to_s
+        if interpolated['debug'] == 'true'
+          log "block #{x} is parsed"
+        end
 		memory['previous_block'] = x
         x = x + 1
       end
