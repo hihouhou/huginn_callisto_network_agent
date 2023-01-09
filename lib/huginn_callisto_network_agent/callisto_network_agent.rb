@@ -164,6 +164,34 @@ module Agents
       return found_name
     end
 
+    def get_tx_receipt(hash)
+
+      uri = URI.parse("#{interpolated['rpc_server']}")
+      request = Net::HTTP::Post.new(uri)
+      request.content_type = "application/json"
+      request.body = JSON.dump({
+        "method" => "eth_getTransactionReceipt",
+        "params" => [
+          "#{hash}"
+        ],
+        "id" => 1,
+        "jsonrpc" => "2.0"
+      })
+
+      req_options = {
+        use_ssl: uri.scheme == "https",
+      }
+
+      response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+        http.request(request)
+      end
+
+      log_curl_output(response.code,response.body)
+
+      return JSON.parse(response.body)
+
+    end
+
 
     def get_data(x)
       hexa_block = x.to_s(16)
@@ -199,6 +227,9 @@ module Agents
             if interpolated['filter_for_method_id'].empty? || interpolated['filter_for_method_id'].include?(transaction['input'][0, 10])
               transaction['blockNumber'] = transaction['blockNumber'].to_i(16)
               transaction['timestamp'] = timestamp
+              transaction['call_type'] = find_call_name(transaction['input'][0, 10])
+              receipt_data = get_tx_receipt(transaction['hash'])
+              transaction['status'] = receipt_data['result']['status']
               transaction['call_type'] = find_call_name(transaction['input'][0, 10])
               create_event payload: transaction
             end
