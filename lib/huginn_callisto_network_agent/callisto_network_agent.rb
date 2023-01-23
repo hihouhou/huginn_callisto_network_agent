@@ -139,29 +139,17 @@ module Agents
 
     end
 
-    def find_call_name(id)
+    def find_symbol(contract)
 
-      case id
-      when "0xb88a802f"
-        found_name = 'claimReward'
-      when "0xe80233c6"
-        found_name = 'activateNode'
-      when "0x65814455"
-        found_name = 'deactivateNode'
-      when "0xb199892a"
-        found_name = 'addNode'
-      when "0xcdfdb7dc"
-        found_name = 'setRatios'
-      when "0x01026099"
-        found_name = 'addTokens'
-      when "0xb2b99ec9"
-        found_name = 'removeNode'
-      when "0x095ea7b3"
-        found_name = 'approve'
+      case contract
+      when "0x9fae2529863bd691b4a7171bdfcf33c7ebb10a65"
+        found_symbol = 'SOY'
+      when "0x1eaa43544daa399b87eecfcc6fa579d5ea4a6187"
+        found_symbol = 'CLOE'
       else
-        found_name = 'unknown'
+        found_symbol = 'unknown'
       end
-      return found_name
+      return found_symbol
     end
 
     def get_tx_receipt(hash)
@@ -220,17 +208,46 @@ module Agents
 
       tx = JSON.parse(response.body)
       timestamp = tx['result']['timestamp'].to_i(16)
+      power = (10 ** 18).to_i
       if !tx['result']['transactions'].empty?
         tx['result']['transactions'].each do |transaction|
           if ( !transaction['from'].nil? && transaction['from'].upcase == interpolated['wallet'].upcase ) || ( !transaction['to'].nil? && transaction['to'].upcase == interpolated['wallet'].upcase )
-#          if transaction['from'].upcase == interpolated['wallet'].upcase || transaction['to'].upcase == interpolated['wallet'].upcase
             if interpolated['filter_for_method_id'].empty? || interpolated['filter_for_method_id'].include?(transaction['input'][0, 10])
               transaction['blockNumber'] = transaction['blockNumber'].to_i(16)
               transaction['timestamp'] = timestamp
-              transaction['call_type'] = find_call_name(transaction['input'][0, 10])
               receipt_data = get_tx_receipt(transaction['hash'])
               transaction['status'] = receipt_data['result']['status']
-              transaction['call_type'] = find_call_name(transaction['input'][0, 10])
+              case transaction['input'][0, 10]
+              when "0xb88a802f"
+                transaction['call_type'] = 'claimReward'
+                transaction['symbol'] = find_symbol(transaction['to'])
+              when "0xe80233c6"
+                transaction['call_type'] = 'activateNode'
+              when "0x65814455"
+                transaction['call_type'] = 'deactivateNode'
+              when "0xb199892a"
+                transaction['call_type'] = 'addNode'
+              when "0xcdfdb7dc"
+                transaction['call_type'] = 'setRatios'
+              when "0x01026099"
+                transaction['call_type'] = 'addTokens'
+              when "0xb2b99ec9"
+                transaction['call_type'] = 'removeNode'
+              when "0x095ea7b3"
+                transaction['call_type'] = 'approve'
+              when "0xa9059cbb"
+                transaction['call_type'] = 'TokenTransfer'
+                transaction['symbol'] = find_symbol(transaction['to'])
+#                transaction['to'] = transaction['input'][10, 64]
+                transaction['to'] = "0x#{transaction['input'][34, 40]}"
+                transaction['value'] = "#{transaction['input'][74, 64].to_i(16) / power.to_i.to_f}"
+              when "0x"
+                transaction['call_type'] = 'Transfer'
+                transaction['symbol'] = "CLO"
+                transaction['value'] = "#{transaction['value'].to_i(16) / power.to_i.to_f}"
+              else
+                transaction['call_type'] = 'unknown'
+              end
               create_event payload: transaction
             end
           end
