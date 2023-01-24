@@ -211,7 +211,7 @@ module Agents
       power = (10 ** 18).to_i
       if !tx['result']['transactions'].empty?
         tx['result']['transactions'].each do |transaction|
-          if ( !transaction['from'].nil? && interpolated['wallet'].upcase.include?(transaction['from'].upcase) ) || ( !transaction['to'].nil? && interpolated['wallet'].upcase.include?(transaction['to'].upcase) )
+          if ( !transaction['from'].nil? && interpolated['wallet'].upcase.include?(transaction['from'].upcase) ) || ( !transaction['to'].nil? && interpolated['wallet_dest'].upcase.include?(transaction['to'].upcase) )
             if interpolated['filter_for_method_id'].empty? || interpolated['filter_for_method_id'].include?(transaction['input'][0, 10])
               transaction['blockNumber'] = transaction['blockNumber'].to_i(16)
               transaction['timestamp'] = timestamp
