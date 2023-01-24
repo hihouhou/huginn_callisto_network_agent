@@ -211,12 +211,13 @@ module Agents
       power = (10 ** 18).to_i
       if !tx['result']['transactions'].empty?
         tx['result']['transactions'].each do |transaction|
-          if ( !transaction['from'].nil? && transaction['from'].upcase == interpolated['wallet'].upcase ) || ( !transaction['to'].nil? && transaction['to'].upcase == interpolated['wallet'].upcase )
+          if ( !transaction['from'].nil? && interpolated['wallet'].upcase.include?(transaction['from'].upcase) ) || ( !transaction['to'].nil? && interpolated['wallet'].upcase.include?(transaction['to'].upcase) )
             if interpolated['filter_for_method_id'].empty? || interpolated['filter_for_method_id'].include?(transaction['input'][0, 10])
               transaction['blockNumber'] = transaction['blockNumber'].to_i(16)
               transaction['timestamp'] = timestamp
               receipt_data = get_tx_receipt(transaction['hash'])
               transaction['status'] = receipt_data['result']['status']
+#              transaction['input_converted_utf8'] = [transaction['input']].pack("H*")
               case transaction['input'][0, 10]
               when "0xb88a802f"
                 transaction['call_type'] = 'claimReward'
