@@ -236,6 +236,8 @@ module Agents
                 transaction['call_type'] = 'removeNode'
               when "0x095ea7b3"
                 transaction['call_type'] = 'approve'
+              when "0xf2fde38b"
+                transaction['call_type'] = 'transferOwnership'
               when "0xa9059cbb"
                 transaction['call_type'] = 'TokenTransfer'
                 transaction['symbol'] = find_symbol(transaction['to'])
