@@ -25,7 +25,6 @@ And then execute:
 TODO: Write usage instructions here
 
 ## Development
-![image](https://user-images.githubusercontent.com/10907233/217501728-99f95332-03d7-4bd4-a25e-dbbe26507ffa.png)
 
 Running `rake` will clone and set up Huginn in `spec/huginn` to run the specs of the Gem in Huginn as if they would be build-in Agents. The desired Huginn repository and branch can be modified in the `Rakefile`:
 
