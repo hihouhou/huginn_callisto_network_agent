@@ -25,6 +25,7 @@ And then execute:
 TODO: Write usage instructions here
 
 ## Development
+![image](https://user-images.githubusercontent.com/10907233/217501728-99f95332-03d7-4bd4-a25e-dbbe26507ffa.png)
 
 Running `rake` will clone and set up Huginn in `spec/huginn` to run the specs of the Gem in Huginn as if they would be build-in Agents. The desired Huginn repository and branch can be modified in the `Rakefile`:
 
@@ -45,3 +46,9 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create a new Pull Request
+
+## example of a scenario
+![Capture d’écran 2023-02-08 111634](https://user-images.githubusercontent.com/10907233/217501667-a5667b60-1187-4fc2-948f-f2ea48121c6f.jpg)
+![Capture d’écran 2023-02-08 111617](https://user-images.githubusercontent.com/10907233/217501669-13f05b3c-9470-4cf0-8798-d2a66f2266e2.jpg)
+![Capture d’écran 2023-02-08 111700](https://user-images.githubusercontent.com/10907233/217501662-3f631a54-fb17-4799-b42a-55db34203dfb.jpg)
+
