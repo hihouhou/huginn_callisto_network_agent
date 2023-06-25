@@ -16,6 +16,8 @@ module Agents
 
       The `value` is needed when you want to send CLO.
 
+      The `round` is needed when you want to do CLO coldstacking.
+
       The `wallet_dest` is needed  when you want to send CLO.
 
       The `debug` can add verbosity.
@@ -46,6 +48,7 @@ module Agents
         'expected_receive_period_in_days' => '2',
         'wallet_password' => '',
         'value' => '',
+        'round' => '',
         'wallet_dest' => '',
         'changes_only' => 'true',
         'filter_for_method_id' => '',
@@ -57,22 +60,23 @@ module Agents
     form_configurable :emit_events, type: :boolean
     form_configurable :expected_receive_period_in_days, type: :string
     form_configurable :changes_only, type: :boolean
-    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx', 'get_tx_by_address_with_filter']
+    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx', 'get_tx_by_address_with_filter', 'start_cs_clo', 'withdraw_cs_clo']
     form_configurable :wallet, type: :string
     form_configurable :rpc_server, type: :string
     form_configurable :wallet_password, type: :string
     form_configurable :value, type: :string
+    form_configurable :round, type: :string
     form_configurable :wallet_dest, type: :string
     form_configurable :filter_for_method_id, type: :string
     form_configurable :last_block, type: :string
     def validate_options
-      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx get_tx_by_address_with_filter).include?(interpolated['type'])
+      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'withdraw_cs_clo'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx get_tx_by_address_with_filter start_cs_clo withdraw_cs_clo).include?(interpolated['type'])
 
-      unless options['wallet_password'].present? || !['clo_sendtx'].include?(options['type'])
+      unless options['wallet_password'].present? || !['clo_sendtx' 'start_cs_clo' 'withdraw_cs_clo'].include?(options['type'])
         errors.add(:base, "wallet_password is a required field")
       end
 
-      unless options['value'].present? || !['clo_sendtx'].include?(options['type'])
+      unless options['value'].present? || !['clo_sendtx' 'start_cs_clo'].include?(options['type'])
         errors.add(:base, "value is a required field")
       end
 
@@ -80,11 +84,15 @@ module Agents
         errors.add(:base, "wallet_dest is a required field")
       end
 
+      unless options['round'].present? || !['start_cs_clo'].include?(options['type'])
+        errors.add(:base, "round is a required field")
+      end
+
       unless options['rpc_server'].present?
         errors.add(:base, "rpc_server is a required field")
       end
 
-      unless options['wallet'].present? || !['get_balance' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter'].include?(options['type'])
+      unless options['wallet'].present? || !['get_balance' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo'].include?(options['type'])
         errors.add(:base, "wallet is a required field")
       end
 
@@ -127,6 +135,16 @@ module Agents
     end
 
     private
+
+    def to_hex(value, length = 64, with_0x = false)
+      log value
+      log value.class
+      hex = value.to_s(16)
+      hex = hex.rjust(length, '0')
+      hex = hex.sub(/^0x/, '') unless with_0x
+      hex = "0x" + hex if with_0x
+      hex
+    end
 
     def log_curl_output(code,body)
 
@@ -334,6 +352,9 @@ module Agents
         if interpolated['debug'] == 'true'
           log "the wallet is unlocked"
         end
+        gas_price = 39999999997
+        power_of_10 = 18
+        final_value = interpolated['value'].to_i * 10**power_of_10
         uri = URI.parse("#{interpolated['rpc_server']}")
         request = Net::HTTP::Post.new(uri)
         request.content_type = "application/json; charset=UTF-8"
@@ -344,7 +365,103 @@ module Agents
             {
               "from" => "#{interpolated['wallet']}",
               "to" => "#{interpolated['wallet_dest']}",
-              "value" => "0x#{interpolated['value'].to_i.to_s(16)}"
+              "value" => "0x#{final_value.to_s(16)}",
+              "gasPrice" => "0x#{gas_price.to_s(16)}"
+            }
+          ],
+          "id" => 1
+        })
+
+        req_options = {
+          use_ssl: uri.scheme == "https",
+        }
+
+        response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+          http.request(request)
+        end
+
+        log_curl_output(response.code,response.body)
+
+        if interpolated['emit_events'] == 'true'
+          create_event payload: response.body
+        end
+      end
+    end
+
+    def start_cs_clo()
+      if interpolated['debug'] == 'true'
+        log "unlocking the wallet"
+      end
+      response = JSON.parse(unlock_wallet())
+      log "response -> #{response}"
+      log "response result -> #{response['result']}"
+      if response['result'] == true
+        if interpolated['debug'] == 'true'
+          log "the wallet is unlocked"
+        end
+        gas_price = 39999999997
+        power_of_10 = 18
+        final_value = interpolated['value'].to_i * 10**power_of_10
+        uri = URI.parse("#{interpolated['rpc_server']}")
+        request = Net::HTTP::Post.new(uri)
+        request.content_type = "application/json"
+        request.body = JSON.dump({
+          "jsonrpc" => "2.0",
+          "method" => "eth_sendTransaction",
+          "params" => [
+            {
+              "from" => "#{interpolated['wallet']}",
+              "to" => "0x08A7c8be47773546DC5E173d67B0c38AfFfa4b84",
+              "data" => "0x5d8c85ef#{to_hex(interpolated['round'].to_i)}",
+              "value" => "0x#{final_value.to_s(16)}",
+              "gasPrice" => "0x#{gas_price.to_s(16)}"
+            }
+          ],
+          "id" => 1
+        })
+
+        req_options = {
+          use_ssl: uri.scheme == "https",
+        }
+
+        response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+          http.request(request)
+        end
+
+        log_curl_output(response.code,response.body)
+
+        if interpolated['emit_events'] == 'true'
+          create_event payload: response.body
+        end
+      end
+    end
+
+    def withdraw_cs_clo()
+      if interpolated['debug'] == 'true'
+        log "unlocking the wallet"
+      end
+      response = JSON.parse(unlock_wallet())
+      log "response -> #{response}"
+      log "response result -> #{response['result']}"
+      if response['result'] == true
+        if interpolated['debug'] == 'true'
+          log "the wallet is unlocked"
+        end
+        gas_price = 39999999997
+        power_of_10 = 18
+        final_value = interpolated['value'].to_i * 10**power_of_10
+        uri = URI.parse("#{interpolated['rpc_server']}")
+        request = Net::HTTP::Post.new(uri)
+        request.content_type = "application/json"
+        request.body = JSON.dump({
+          "jsonrpc" => "2.0",
+          "method" => "eth_sendTransaction",
+          "params" => [
+            {
+              "from" => "#{interpolated['wallet']}",
+              "to" => "0x08A7c8be47773546DC5E173d67B0c38AfFfa4b84",
+              "data" => "0xcd948855",
+              "gasPrice" => "0x#{gas_price.to_s(16)}"
             }
           ],
           "id" => 1
@@ -1243,6 +1360,10 @@ module Agents
         soy_cs_pending_rewards()
       when "clo_sendtx"
         clo_sendtx()
+      when "start_cs_clo"
+        start_cs_clo()
+      when "withdraw_cs_clo"
+        withdraw_cs_clo()
       when "get_tx_by_address_with_filter"
         get_tx_by_address_with_filter()
       else
