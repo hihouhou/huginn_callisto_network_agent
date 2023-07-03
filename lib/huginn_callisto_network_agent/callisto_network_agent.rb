@@ -258,8 +258,12 @@ module Agents
                 transaction['call_type'] = 'transferOwnership'
               when "0x38ed1739"
                 transaction['call_type'] = 'swapExactTokensForTokens'
+              when "0x2e9b3dc3"
+                transaction['call_type'] = 'swapExactCLOForTokens'
               when "0xa6e83852"
                 transaction['call_type'] = 'swapTokensForExactCLO'
+              when "0x487cda0d"
+                transaction['call_type'] = 'depositTokens'
               when "0xa9059cbb"
                 transaction['call_type'] = 'TokenTransfer'
                 transaction['symbol'] = find_symbol(transaction['to'])
