@@ -826,8 +826,8 @@ module Agents
       payload = JSON.parse(response.body)
 
       if interpolated['changes_only'] == 'true'
-        if payload.to_s != memory['eth_getBlockByNumber']
-          memory['eth_getBlockByNumber'] = payload.to_s
+        if payload != memory['eth_getBlockByNumber']
+          memory['eth_getBlockByNumber'] = payload
           if payload.key?("result")
             payload['result']['number'] = payload['result']['number'].to_i(16)
             payload['result']['timestamp'] = payload['result']['timestamp'].to_i(16)
@@ -844,8 +844,8 @@ module Agents
           create_event payload: payload
         end
       else
-        if payload.to_s != memory['eth_getBlockByNumber']
-          memory['eth_getBlockByNumber'] = payload.to_s
+        if payload != memory['eth_getBlockByNumber']
+          memory['eth_getBlockByNumber'] = payload
         end
         payload['result']['number'] = payload['result']['number'].to_i(16)
         payload['result']['timestamp'] = payload['result']['timestamp'].to_i(16)
