@@ -969,7 +969,7 @@ module Agents
       fixed_payload = JSON.parse(response.body)
 
       if interpolated['changes_only'] == 'true'
-        if payload.to_s != memory['get_tokens_balance']
+        if payload != memory['get_tokens_balance']
           if "#{memory['get_tokens_balance']}" == ''
             payload.each do | token |
               case token['id']
@@ -991,8 +991,7 @@ module Agents
               create_event payload: token
             end
           else
-            last_status = memory['get_tokens_balance'].gsub("=>", ": ").gsub(": nil,", ": null,")
-            last_status = JSON.parse(last_status)
+            last_status = JSON.parse(memory['get_tokens_balance'])
             payload.each do | token |
               found = false
               last_status.each do | tokenbis|
@@ -1018,11 +1017,11 @@ module Agents
               end
             end
           end
-          memory['get_tokens_balance'] = fixed_payload.to_s
+          memory['get_tokens_balance'] = fixed_payload
         end
       else
-        if payload.to_s != memory['get_tokens_balance']
-          memory['get_tokens_balance']= fixed_payload.to_s
+        if payload != memory['get_tokens_balance']
+          memory['get_tokens_balance']= fixed_payload
         end
         power = (10 ** 18).to_i
         payload.each do | token |
