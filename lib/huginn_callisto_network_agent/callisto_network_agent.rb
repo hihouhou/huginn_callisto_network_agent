@@ -1313,8 +1313,8 @@ module Agents
       payload = JSON.parse(response.body)
 
       if interpolated['changes_only'] == 'true'
-        if payload.to_s != memory['get_balance']
-          memory['get_balance'] = payload.to_s
+        if payload != memory['get_balance']
+          memory['get_balance'] = payload
           power = (10 ** 18).to_i
           payload['name'] = "callisto"
           payload['symbol'] = "CLO"
@@ -1323,7 +1323,7 @@ module Agents
         end
       else
         if payload.to_s != memory['get_balance']
-          memory['get_balance'] = payload.to_s
+          memory['get_balance'] = payload
         end
         power = (10 ** 18).to_i
         payload['result'] = payload['result'].to_i(16) / power.to_i.to_f
