@@ -991,12 +991,18 @@ module Agents
               create_event payload: token
             end
           else
-            last_status = JSON.parse(memory['get_tokens_balance'])
+            last_status = memory['get_tokens_balance']
             payload.each do | token |
               found = false
+              if interpolated['debug'] == 'true'
+                log found
+              end
               last_status.each do | tokenbis|
                 if token == tokenbis
                   found = true
+                end
+                if interpolated['debug'] == 'true'
+                  log found
                 end
               end
               if found == false
