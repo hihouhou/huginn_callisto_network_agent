@@ -264,6 +264,8 @@ module Agents
                 transaction['call_type'] = 'swapTokensForExactCLO'
               when "0x487cda0d"
                 transaction['call_type'] = 'depositTokens'
+              when "0x8803dbee"
+                transaction['call_type'] = 'swapTokensForExactTokens'
               when "0xa9059cbb"
                 transaction['call_type'] = 'TokenTransfer'
                 transaction['symbol'] = find_symbol(transaction['to'])
