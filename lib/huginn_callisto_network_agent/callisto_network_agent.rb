@@ -348,6 +348,7 @@ module Agents
     end
 
     def clo_sendtx()
+      internal = true
       if interpolated['debug'] == 'true'
         log "unlocking the wallet"
       end
@@ -358,7 +359,6 @@ module Agents
         if interpolated['debug'] == 'true'
           log "the wallet is unlocked"
         end
-        gas_price = 39999999997
         power_of_10 = 18
         final_value = interpolated['value'].to_i * 10**power_of_10
         uri = URI.parse("#{interpolated['rpc_server']}")
@@ -372,7 +372,7 @@ module Agents
               "from" => "#{interpolated['wallet']}",
               "to" => "#{interpolated['wallet_dest']}",
               "value" => "0x#{final_value.to_s(16)}",
-              "gasPrice" => "0x#{gas_price.to_s(16)}"
+              "gasPrice" => "#{eth_gasPrice(internal)}"
             }
           ],
           "id" => 1
@@ -395,6 +395,7 @@ module Agents
     end
 
     def start_cs_clo()
+      internal = true
       if interpolated['debug'] == 'true'
         log "unlocking the wallet"
       end
@@ -405,7 +406,6 @@ module Agents
         if interpolated['debug'] == 'true'
           log "the wallet is unlocked"
         end
-        gas_price = 39999999997
         power_of_10 = 18
         final_value = interpolated['value'].to_i * 10**power_of_10
         uri = URI.parse("#{interpolated['rpc_server']}")
@@ -420,7 +420,7 @@ module Agents
               "to" => "0x08A7c8be47773546DC5E173d67B0c38AfFfa4b84",
               "data" => "0x5d8c85ef#{to_hex(interpolated['round'].to_i)}",
               "value" => "0x#{final_value.to_s(16)}",
-              "gasPrice" => "0x#{gas_price.to_s(16)}"
+              "gasPrice" => "#{eth_gasPrice(internal)}"
             }
           ],
           "id" => 1
@@ -443,6 +443,7 @@ module Agents
     end
 
     def withdraw_cs_clo()
+      internal = true
       if interpolated['debug'] == 'true'
         log "unlocking the wallet"
       end
@@ -453,7 +454,6 @@ module Agents
         if interpolated['debug'] == 'true'
           log "the wallet is unlocked"
         end
-        gas_price = 39999999997
         power_of_10 = 18
         final_value = interpolated['value'].to_i * 10**power_of_10
         uri = URI.parse("#{interpolated['rpc_server']}")
@@ -467,7 +467,7 @@ module Agents
               "from" => "#{interpolated['wallet']}",
               "to" => "0x08A7c8be47773546DC5E173d67B0c38AfFfa4b84",
               "data" => "0xcd948855",
-              "gasPrice" => "0x#{gas_price.to_s(16)}"
+              "gasPrice" => "#{eth_gasPrice(internal)}"
             }
           ],
           "id" => 1
@@ -1136,7 +1136,7 @@ module Agents
       end
     end
 
-    def eth_gasPrice()
+    def eth_gasPrice(internal=false)
 
       uri = URI.parse("#{interpolated['rpc_server']}")
       request = Net::HTTP::Post.new(uri)
@@ -1160,18 +1160,25 @@ module Agents
 
       payload = JSON.parse(response.body)
 
-      if interpolated['changes_only'] == 'true'
-        if payload.to_s != memory['eth_gasPrice']
-          memory['eth_gasPrice'] = payload.to_s
+      if internal == false
+        if interpolated['changes_only'] == 'true'
+          if payload.to_s != memory['eth_gasPrice']
+            memory['eth_gasPrice'] = payload.to_s
+            payload['result'] = payload['result'].to_i(16)
+            create_event payload: payload
+          end
+        else
+          if payload.to_s != memory['eth_gasPrice']
+            memory['eth_gasPrice'] = payload.to_s
+          end
           payload['result'] = payload['result'].to_i(16)
           create_event payload: payload
         end
       else
-        if payload.to_s != memory['eth_gasPrice']
-          memory['eth_gasPrice'] = payload.to_s
-        end
-        payload['result'] = payload['result'].to_i(16)
-        create_event payload: payload
+        output = JSON.parse(response.body)
+
+        return output['result']
+
       end
     end
 
