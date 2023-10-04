@@ -143,8 +143,8 @@ module Agents
     private
 
     def to_hex(value, length = 64, with_0x = false)
-      log value
-      log value.class
+#      log value
+#      log value.class
       hex = value.to_s(16)
       hex = hex.rjust(length, '0')
       hex = hex.sub(/^0x/, '') unless with_0x
@@ -154,9 +154,8 @@ module Agents
 
     def log_curl_output(code,body)
 
-      log "request status : #{code}"
-
       if interpolated['debug'] == 'true'
+      log "request status : #{code}"
         log "body"
         log body
       end
@@ -205,8 +204,8 @@ module Agents
     end
 
     def percentage(number, total)
-      log number
-      log total
+#      log number
+#      log total
       (number/total.to_f*100).round(2)
     end
 
@@ -251,12 +250,12 @@ module Agents
       top_tx = most_common_from(tx_list)
       top_count = tx_list.count { |hash| hash['from'] == top_tx }
       miners_count = tx_list.select { |hash| all_miners.include?(hash['from']) }
-      log "miners_count #{miners_count.count}"
+#      log "miners_count #{miners_count.count}"
       shitty_count = tx_list.select { |hash| shitty_wallets.include?(hash['from']) }
-      log "shitty_count #{shitty_count.count}"
+#      log "shitty_count #{shitty_count.count}"
       active = tx_list.map { |p| p['from'] }.uniq.count
-      log "top_count : #{top_count}"
-      log "total : #{tx_list.count}"
+#      log "top_count : #{top_count}"
+#      log "total : #{tx_list.count}"
       create_event :payload => { 'total_tx' => "#{tx_list.count}", 'total_active' => "#{active}", 'burnt_clo' => "#{burnt_ether}", 'top_wallet': {'address' => "#{top_tx}", 'percentage' => "#{percentage(top_count.to_i,tx_list.count.to_i)}"}, 'shitty': {'address': 'shitty', 'shitty_percentage' => "#{percentage(shitty_count.count,tx_list.count.to_i)}"}, 'miners': {'address': "miners", 'percentage' => "#{percentage(miners_count.count,tx_list.count.to_i)}"}}
 
     end
