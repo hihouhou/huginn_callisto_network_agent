@@ -342,6 +342,8 @@ module Agents
                   transaction['call_type'] = 'update'
                 when "0x40c10f19"
                   transaction['call_type'] = 'mint'
+                when "0x78be0ad4"
+                  transaction['call_type'] = 'withdraw_stake'
                 else
                   transaction['call_type'] = 'unknown'
                 end
