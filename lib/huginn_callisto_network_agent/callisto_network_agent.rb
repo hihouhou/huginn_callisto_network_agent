@@ -61,7 +61,7 @@ module Agents
     form_configurable :emit_events, type: :boolean
     form_configurable :expected_receive_period_in_days, type: :string
     form_configurable :changes_only, type: :boolean
-    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx', 'get_tx_by_address_with_filter', 'start_cs_clo', 'withdraw_cs_clo', 'get_tx_stats']
+    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx', 'get_tx_by_address_with_filter', 'start_cs_clo', 'withdraw_cs_clo', 'get_tx_stats', 'callosha_slots']
     form_configurable :wallet, type: :string
     form_configurable :rpc_server, type: :string
     form_configurable :wallet_password, type: :string
@@ -72,13 +72,13 @@ module Agents
     form_configurable :first_block, type: :string
     form_configurable :last_block, type: :string
     def validate_options
-      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'withdraw_cs_clo' 'get_tx_stats'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx get_tx_by_address_with_filter start_cs_clo withdraw_cs_clo get_tx_stats).include?(interpolated['type'])
+      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'withdraw_cs_clo' 'get_tx_stats' 'callosha_slots'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx get_tx_by_address_with_filter start_cs_clo withdraw_cs_clo get_tx_stats callosha_slots).include?(interpolated['type'])
 
       unless options['wallet_password'].present? || !['clo_sendtx' 'start_cs_clo' 'withdraw_cs_clo'].include?(options['type'])
         errors.add(:base, "wallet_password is a required field")
       end
 
-      unless options['value'].present? || !['clo_sendtx' 'start_cs_clo'].include?(options['type'])
+      unless options['value'].present? || !['clo_sendtx' 'start_cs_clo' 'callosha_slots'].include?(options['type'])
         errors.add(:base, "value is a required field")
       end
 
@@ -86,7 +86,7 @@ module Agents
         errors.add(:base, "wallet_dest is a required field")
       end
 
-      unless options['round'].present? || !['start_cs_clo'].include?(options['type'])
+      unless options['round'].present? || !['start_cs_clo' 'callosha_slots'].include?(options['type'])
         errors.add(:base, "round is a required field")
       end
 
@@ -94,7 +94,7 @@ module Agents
         errors.add(:base, "rpc_server is a required field")
       end
 
-      unless options['wallet'].present? || !['get_balance' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo'].include?(options['type'])
+      unless options['wallet'].present? || !['get_balance' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'callosha_slots'].include?(options['type'])
         errors.add(:base, "wallet is a required field")
       end
 
@@ -142,6 +142,22 @@ module Agents
 
     private
 
+    def max_gain(contract)
+      internal = true
+      balance = get_balance(internal,contract)
+      max_gain_for_1000 = balance * 0.7
+      max_gain_for_1 = max_gain_for_1000 / 1000
+      max_gain = interpolated['value'].to_i * max_gain_for_1
+      if interpolated['debug'] == 'true'
+        log "bank balance : #{balance}"
+        log "max gain for 1000 : #{max_gain_for_1000}"
+        log "max gain for 1 : #{max_gain_for_1}"
+        log "max gain : #{max_gain}"
+      end
+      return max_gain
+
+    end
+
     def to_hex(value, length = 64, with_0x = false)
 #      log value
 #      log value.class
@@ -155,7 +171,7 @@ module Agents
     def log_curl_output(code,body)
 
       if interpolated['debug'] == 'true'
-      log "request status : #{code}"
+        log "request status : #{code}"
         log "body"
         log body
       end
@@ -227,6 +243,56 @@ module Agents
         end
       end
       return total
+    end
+
+    def callosha_slots()
+
+      internal = true
+      contract = "0x7777265DC7FD2a15A7f2E8d8Ad87b3DAec677777"
+      power_of_10 = 18
+      final_value = interpolated['value'].to_i * 10**power_of_10
+#      log "0x83f818b4000000000000000000000000000000000000000000000000016345785d8a00000000000000000000000000000000000000000000000000000000000000000001"
+#      log "0x83f818b4#{to_hex(max_gain(contract).to_i)}#{to_hex(interpolated['round'].to_i)}"
+      if interpolated['debug'] == 'true'
+        log "unlocking the wallet"
+      end
+      response = JSON.parse(unlock_wallet())
+      log "response -> #{response}"
+      log "response result -> #{response['result']}"
+      if response['result'] == true
+        if interpolated['debug'] == 'true'
+          log "the wallet is unlocked"
+        end
+        uri = URI.parse("#{interpolated['rpc_server']}")
+        request = Net::HTTP::Post.new(uri)
+        request.content_type = "application/json"
+        request.body = JSON.dump({
+          "jsonrpc" => "2.0",
+          "method" => "eth_sendTransaction",
+          "params" => [
+            {
+              "to" => "#{contract}",
+              "from" => "#{interpolated['wallet']}",
+              "value" => "0x#{final_value.to_s(16)}",
+              "data" => "0x83f818b4#{to_hex(max_gain(contract).to_i)}#{to_hex(interpolated['round'].to_i)}",
+              "gasPrice" => "#{eth_gasPrice(internal)}"
+            }
+          ],
+#          "gas" => "0x186a0",
+          "id" => 1
+        })
+
+        req_options = {
+          use_ssl: uri.scheme == "https",
+        }
+
+        response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+          http.request(request)
+        end
+
+        log_curl_output(response.code,response.body)
+      end
+
     end
 
     def get_tx_stats()
@@ -521,8 +587,8 @@ module Agents
         if interpolated['debug'] == 'true'
           log "the wallet is unlocked"
         end
-        power_of_10 = 18
-        final_value = interpolated['value'].to_i * 10**power_of_10
+#        power_of_10 = 18
+#        final_value = interpolated['value'].to_i * 10**power_of_10
         uri = URI.parse("#{interpolated['rpc_server']}")
         request = Net::HTTP::Post.new(uri)
         request.content_type = "application/json"
@@ -1366,7 +1432,7 @@ module Agents
       end
     end
 
-    def get_balance()
+    def get_balance(internal=false,address)
 
       uri = URI.parse("#{interpolated['rpc_server']}")
       request = Net::HTTP::Post.new(uri)
@@ -1374,7 +1440,7 @@ module Agents
       request.body = JSON.dump({
         "method" => "eth_getBalance",
         "params" => [
-          "#{interpolated['wallet']}",
+          "#{address}",
           "latest"
         ],
         "id" => 1,
@@ -1393,22 +1459,25 @@ module Agents
 
       payload = JSON.parse(response.body)
 
-      if interpolated['changes_only'] == 'true'
-        if payload != memory['get_balance']
-          memory['get_balance'] = payload
-          power = (10 ** 18).to_i
-          payload['name'] = "callisto"
-          payload['symbol'] = "CLO"
+      power = (10 ** 18).to_i
+      if internal == false
+        if interpolated['changes_only'] == 'true'
+          if payload != memory['get_balance']
+            memory['get_balance'] = payload
+            payload['name'] = "callisto"
+            payload['symbol'] = "CLO"
+            payload['result'] = payload['result'].to_i(16) / power.to_i.to_f
+            create_event payload: payload
+          end
+        else
+          if payload.to_s != memory['get_balance']
+            memory['get_balance'] = payload
+          end
           payload['result'] = payload['result'].to_i(16) / power.to_i.to_f
           create_event payload: payload
         end
       else
-        if payload.to_s != memory['get_balance']
-          memory['get_balance'] = payload
-        end
-        power = (10 ** 18).to_i
-        payload['result'] = payload['result'].to_i(16) / power.to_i.to_f
-        create_event payload: payload
+        payload['result'].to_i(16) / power.to_i.to_f
       end
     end
 
@@ -1416,7 +1485,7 @@ module Agents
 
       case interpolated['type']
       when "get_balance"
-        get_balance()
+        get_balance(false,interpolated['wallet'])
       when "net_peerCount"
         net_peerCount()
       when "net_version"
@@ -1453,6 +1522,8 @@ module Agents
         get_tx_by_address_with_filter()
       when "get_tx_stats"
         get_tx_stats()
+      when "callosha_slots"
+        callosha_slots()
       else
         log "Error: type has an invalid value (#{type})"
       end
