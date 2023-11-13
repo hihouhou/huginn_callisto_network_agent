@@ -412,8 +412,14 @@ module Agents
                   transaction['call_type'] = 'withdraw_stake'
                 when "0x5d8c85ef"
                   transaction['call_type'] = 'start_staking'
-                when "0x8f995234"
+                when "0x8f995234", "0x4e71d92d"
                   transaction['call_type'] = 'claim'
+                when "0xfe3f3f02"
+                  transaction['call_type'] = 'setSalary'
+                when "0x957138a4"
+                  transaction['call_type'] = 'setStop'
+                when "0xc4d66de8"
+                  transaction['call_type'] = 'initialize'
                 else
                   transaction['call_type'] = 'unknown'
                 end
