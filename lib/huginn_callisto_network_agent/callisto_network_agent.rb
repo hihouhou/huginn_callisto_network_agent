@@ -420,6 +420,8 @@ module Agents
                   transaction['call_type'] = 'setStop'
                 when "0xc4d66de8"
                   transaction['call_type'] = 'initialize'
+                when "0x96d4f640"
+                  transaction['call_type'] = 'createOrder'
                 else
                   transaction['call_type'] = 'unknown'
                 end
