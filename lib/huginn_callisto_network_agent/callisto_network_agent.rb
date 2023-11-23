@@ -422,6 +422,10 @@ module Agents
                   transaction['call_type'] = 'initialize'
                 when "0x96d4f640"
                   transaction['call_type'] = 'createOrder'
+                when "0xbd000546"
+                  transaction['call_type'] = 'DeleteOrder'
+                when "0x514fcac7"
+                  transaction['call_type'] = 'cancelOrder'
                 else
                   transaction['call_type'] = 'unknown'
                 end
