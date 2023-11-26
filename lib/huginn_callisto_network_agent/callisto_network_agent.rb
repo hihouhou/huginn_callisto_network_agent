@@ -61,7 +61,7 @@ module Agents
     form_configurable :emit_events, type: :boolean
     form_configurable :expected_receive_period_in_days, type: :string
     form_configurable :changes_only, type: :boolean
-    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx', 'get_tx_by_address_with_filter', 'start_cs_clo', 'withdraw_cs_clo', 'get_tx_stats', 'callosha_slots']
+    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx', 'get_tx_by_address_with_filter', 'start_cs_clo', 'withdraw_cs_clo', 'get_tx_stats', 'callosha_slots', '2bears_check_order_by_id']
     form_configurable :wallet, type: :string
     form_configurable :rpc_server, type: :string
     form_configurable :wallet_password, type: :string
@@ -72,13 +72,13 @@ module Agents
     form_configurable :first_block, type: :string
     form_configurable :last_block, type: :string
     def validate_options
-      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'withdraw_cs_clo' 'get_tx_stats' 'callosha_slots'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx get_tx_by_address_with_filter start_cs_clo withdraw_cs_clo get_tx_stats callosha_slots).include?(interpolated['type'])
+      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'withdraw_cs_clo' 'get_tx_stats' 'callosha_slots' '2bears_check_order_by_id'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx get_tx_by_address_with_filter start_cs_clo withdraw_cs_clo get_tx_stats callosha_slots 2bears_check_order_by_id).include?(interpolated['type'])
 
       unless options['wallet_password'].present? || !['clo_sendtx' 'start_cs_clo' 'withdraw_cs_clo'].include?(options['type'])
         errors.add(:base, "wallet_password is a required field")
       end
 
-      unless options['value'].present? || !['clo_sendtx' 'start_cs_clo' 'callosha_slots'].include?(options['type'])
+      unless options['value'].present? || !['clo_sendtx' 'start_cs_clo' 'callosha_slots' '2bears_check_order_by_id'].include?(options['type'])
         errors.add(:base, "value is a required field")
       end
 
@@ -291,6 +291,86 @@ module Agents
         end
 
         log_curl_output(response.code,response.body)
+      end
+
+    end
+
+    def twobears_check_order_by_id()
+
+      hex_value = sprintf("%064x", interpolated['value'].to_i)
+      uri = URI.parse("#{interpolated['rpc_server']}")
+      request = Net::HTTP::Post.new(uri)
+      request.content_type = "application/json"
+      request.body = JSON.dump({
+        "jsonrpc" => "2.0",
+        "id" => 1,
+        "method" => "eth_call",
+        "params" => [
+          {
+            "data" => "0x0e0578f5#{hex_value}",
+            "to" => "0x78afc46df1d3eb5cff7044d288a453fe43e17310"
+          },
+          "latest"
+        ]
+      })
+
+      req_options = {
+        use_ssl: uri.scheme == "https",
+      }
+
+      response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+        http.request(request)
+      end
+
+      log_curl_output(response.code,response.body)
+
+      payload = JSON.parse(response.body)
+
+      if interpolated['changes_only'] == 'true'
+        if payload != memory['last_status']
+          create_event payload: decode_2bears_content(payload)
+        end
+      else
+        create_event payload: decode_2bears_content(payload)
+      end
+      memory['last_status'] = payload
+
+    end
+
+    def decode_2bears_content(data)
+
+      event = {}
+      power = (10 ** 18).to_i
+      hex_string = data['result'].gsub(/^0x/, '')
+      chunk_size = 64
+      chunks = hex_string.scan(/.{1,#{chunk_size}}/)
+      tokenin = decode_2bears_token(chunks[7])
+      tokenout = decode_2bears_token(chunks[8])
+      event['timestamp'] = chunks[0].to_i(16)
+      event['commission'] = "#{chunks[1].to_i(16)/ power.to_i.to_f} #{tokenout}"
+      event['value_in'] = "#{chunks[2].to_i(16) / power.to_i.to_f} #{tokenin}"
+      event['price'] = "#{chunks[3].to_i(16) / power.to_i.to_f} #{tokenin}"
+      event['value_out'] = "#{chunks[4].to_i(16) / power.to_i.to_f} #{tokenout}"
+      event['exec_in'] = "#{chunks[5].to_i(16) / power.to_i.to_f} #{tokenin}"
+      event['exec_out'] = "#{chunks[6].to_i(16) / power.to_i.to_f} #{tokenout}"
+      event['token_in'] = tokenin
+      event['token_out'] = tokenout
+      event['owner'] = "0x#{chunks[9]}"
+      event['order_type'] = (chunks[10].to_i(16) == 1) ? "Sell" : "Buy"
+      event['order_status'] = (chunks[11].to_i(16) == 1) ? "Active" : "Executed"
+
+      return event
+
+    end
+
+    def decode_2bears_token(token)
+      case token
+      when "0000000000000000000000000000000000000000000000000000000000000001"
+        return "CLO"
+      when "000000000000000000000000bf6c50889d3a620eb42c0f188b65ade90de958c4"
+        return "BUSDT"
+      else
+        return "IDK"
       end
 
     end
@@ -1540,6 +1620,8 @@ module Agents
         get_tx_stats()
       when "callosha_slots"
         callosha_slots()
+      when "2bears_check_order_by_id"
+        twobears_check_order_by_id()
       else
         log "Error: type has an invalid value (#{type})"
       end
