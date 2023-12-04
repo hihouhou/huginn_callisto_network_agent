@@ -506,6 +506,10 @@ module Agents
                   transaction['call_type'] = 'DeleteOrder'
                 when "0x514fcac7"
                   transaction['call_type'] = 'cancelOrder'
+                when "0xd9caed12"
+                  transaction['call_type'] = 'withdraw'
+                when "0x83f818b4"
+                  transaction['call_type'] = 'game'
                 else
                   transaction['call_type'] = 'unknown'
                 end
