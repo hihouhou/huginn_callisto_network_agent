@@ -488,7 +488,7 @@ module Agents
                   transaction['call_type'] = 'update'
                 when "0x40c10f19"
                   transaction['call_type'] = 'mint'
-                when "0x78be0ad4"
+                when "0x78be0ad4", "0xcd948855"
                   transaction['call_type'] = 'withdraw_stake'
                 when "0x5d8c85ef"
                   transaction['call_type'] = 'start_staking'
@@ -510,6 +510,10 @@ module Agents
                   transaction['call_type'] = 'withdraw'
                 when "0x83f818b4"
                   transaction['call_type'] = 'game'
+                when "0xc180f4f1"
+                  transaction['call_type'] = 'addClassProperty'
+                when "0x3054d9cb"
+                  transaction['call_type'] = 'modifyClassProperty'
                 else
                   transaction['call_type'] = 'unknown'
                 end
