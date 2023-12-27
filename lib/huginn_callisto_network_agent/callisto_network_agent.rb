@@ -514,6 +514,10 @@ module Agents
                   transaction['call_type'] = 'addClassProperty'
                 when "0x3054d9cb"
                   transaction['call_type'] = 'modifyClassProperty'
+                when "0xc98e0c3c"
+                  transaction['call_type'] = 'silentTransfer'
+                when "0x25498c75"
+                  transaction['call_type'] = 'addNewTokenClass'
                 else
                   transaction['call_type'] = 'unknown'
                 end
