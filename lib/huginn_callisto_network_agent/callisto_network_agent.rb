@@ -474,6 +474,8 @@ module Agents
                   transaction['call_type'] = 'depositTokens'
                 when "0x8803dbee"
                   transaction['call_type'] = 'swapTokensForExactTokens'
+                when "0x1da7ee0d"
+                  transaction['call_type'] = 'depositPosition'
                 when "0xa9059cbb"
                   transaction['call_type'] = 'TokenTransfer'
                   transaction['symbol'] = find_symbol(transaction['to'])
@@ -498,7 +500,7 @@ module Agents
                   transaction['call_type'] = 'setSalary'
                 when "0x957138a4"
                   transaction['call_type'] = 'setStop'
-                when "0xc4d66de8"
+                when "0xc4d66de8", "0x1624f6c6"
                   transaction['call_type'] = 'initialize'
                 when "0x96d4f640"
                   transaction['call_type'] = 'createOrder'
@@ -518,6 +520,10 @@ module Agents
                   transaction['call_type'] = 'silentTransfer'
                 when "0x25498c75"
                   transaction['call_type'] = 'addNewTokenClass'
+                when "0x11411e08"
+                  transaction['call_type'] = 'sellToken'
+                when "0xa0169f0d"
+                  transaction['call_type'] = 'createDumperShield'
                 else
                   transaction['call_type'] = 'unknown'
                 end
