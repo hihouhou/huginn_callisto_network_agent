@@ -524,8 +524,23 @@ module Agents
                   transaction['call_type'] = 'sellToken'
                 when "0xa0169f0d"
                   transaction['call_type'] = 'createDumperShield'
+                when "0x335a9406"
+                  transaction['call_type'] = 'transfer'
                 else
                   transaction['call_type'] = 'unknown'
+                end
+                if transaction['input'] != '0x'
+                  hex_string = transaction['input'].dup
+                  hex_string.slice!(0, 2)
+                  # Convert hexadecimal string to bytes
+                  bytes_string = [hex_string].pack("H*")
+                  # Try to convert bytes to UTF-8 and check if it's readable
+                  decoded_string = bytes_string.force_encoding("utf-8")
+                  # Check if the conversion is successful without loss of information
+                  if decoded_string.valid_encoding? && decoded_string.encode("utf-8", invalid: :replace, undef: :replace) == decoded_string
+                    puts "The string is readable by a human: #{decoded_string}"
+                    transaction['input_utf8'] = decoded_string
+                  end
                 end
                 create_event payload: transaction
               end
