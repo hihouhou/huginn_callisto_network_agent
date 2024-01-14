@@ -524,6 +524,10 @@ module Agents
                   transaction['call_type'] = 'sellToken'
                 when "0xa0169f0d"
                   transaction['call_type'] = 'createDumperShield'
+                when "0x2da91f95"
+                  transaction['call_type'] = 'migrationWithdraw'
+                when "0x3659cfe6"
+                  transaction['call_type'] = 'upgradeTo'
                 when "0x335a9406"
                   transaction['call_type'] = 'transfer'
                 else
