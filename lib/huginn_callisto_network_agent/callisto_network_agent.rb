@@ -486,7 +486,7 @@ module Agents
                   transaction['call_type'] = 'Transfer'
                   transaction['symbol'] = "CLO"
                   transaction['value'] = "#{transaction['value'].to_i(16) / power.to_i.to_f}"
-                when "0xa2e62045"
+                when "0xa2e62045", "0x82ab890a"
                   transaction['call_type'] = 'update'
                 when "0x40c10f19"
                   transaction['call_type'] = 'mint'
