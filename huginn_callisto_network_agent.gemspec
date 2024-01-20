@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "huginn_callisto_network_agent"
-  spec.version       = '0.1.74'
+  spec.version       = '0.1.75'
   spec.authors       = ["Nicolas Germain"]
   spec.email         = ["ngermain@hihouhou.com"]
 

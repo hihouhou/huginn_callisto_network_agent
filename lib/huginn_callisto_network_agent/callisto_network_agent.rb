@@ -445,95 +445,97 @@ module Agents
                 transaction['status'] = receipt_data['result']['status']
   #              transaction['input_converted_utf8'] = [transaction['input']].pack("H*")
                 case transaction['input'][0, 10]
+                when "0x"
+                  transaction['call_type'] = 'Transfer'
+                  transaction['symbol'] = "CLO"
+                  transaction['value'] = "#{transaction['value'].to_i(16) / power.to_i.to_f}"
                 when "0xb88a802f"
                   transaction['call_type'] = 'claimReward'
                   transaction['symbol'] = find_symbol(transaction['to'])
                 when "0xe80233c6"
                   transaction['call_type'] = 'activateNode'
-                when "0x65814455"
-                  transaction['call_type'] = 'deactivateNode'
+                when "0xc180f4f1"
+                  transaction['call_type'] = 'addClassProperty'
+                when "0x25498c75"
+                  transaction['call_type'] = 'addNewTokenClass'
                 when "0xb199892a"
                   transaction['call_type'] = 'addNode'
-                when "0xcdfdb7dc"
-                  transaction['call_type'] = 'setRatios'
                 when "0x01026099"
                   transaction['call_type'] = 'addTokens'
-                when "0xb2b99ec9"
-                  transaction['call_type'] = 'removeNode'
                 when "0x095ea7b3"
                   transaction['call_type'] = 'approve'
-                when "0xf2fde38b"
-                  transaction['call_type'] = 'transferOwnership'
-                when "0x38ed1739"
-                  transaction['call_type'] = 'swapExactTokensForTokens'
-                when "0x2e9b3dc3"
-                  transaction['call_type'] = 'swapExactCLOForTokens'
-                when "0xa6e83852"
-                  transaction['call_type'] = 'swapTokensForExactCLO'
-                when "0x487cda0d"
-                  transaction['call_type'] = 'depositTokens'
-                when "0x8803dbee"
-                  transaction['call_type'] = 'swapTokensForExactTokens'
+                when "0x514fcac7"
+                  transaction['call_type'] = 'cancelOrder'
+                when "0x8f995234", "0x4e71d92d"
+                  transaction['call_type'] = 'claim'
+                when "0xa0169f0d"
+                  transaction['call_type'] = 'createDumperShield'
+                when "0x96d4f640"
+                  transaction['call_type'] = 'createOrder'
+                when "0x65814455"
+                  transaction['call_type'] = 'deactivateNode'
+                when "0xbd000546"
+                  transaction['call_type'] = 'DeleteOrder'
                 when "0x1da7ee0d"
                   transaction['call_type'] = 'depositPosition'
+                when "0x487cda0d"
+                  transaction['call_type'] = 'depositTokens'
+                when "0x83f818b4"
+                  transaction['call_type'] = 'game'
+                when "0xc4d66de8", "0x1624f6c6"
+                  transaction['call_type'] = 'initialize'
+                when "0xbf3c35c3"
+                  transaction['call_type'] = 'migrateCLOE'
+                when "0x2da91f95"
+                  transaction['call_type'] = 'migrationWithdraw'
+                when "0x40c10f19"
+                  transaction['call_type'] = 'mint'
+                when "0x3054d9cb"
+                  transaction['call_type'] = 'modifyClassProperty'
+                when "0xb2b99ec9"
+                  transaction['call_type'] = 'removeNode'
+                when "0x11411e08"
+                  transaction['call_type'] = 'sellToken'
+                when "0xcf456ae7"
+                  transaction['call_type'] = 'setMinter'
+                when "0xcdfdb7dc"
+                  transaction['call_type'] = 'setRatios'
+                when "0xfe3f3f02"
+                  transaction['call_type'] = 'setSalary'
+                when "0x957138a4"
+                  transaction['call_type'] = 'setStop'
+                when "0xc98e0c3c"
+                  transaction['call_type'] = 'silentTransfer'
+                when "0x84daaf54"
+                  transaction['call_type'] = 'stakingMigrate'
+                when "0x5d8c85ef"
+                  transaction['call_type'] = 'start_staking'
+                when "0x2e9b3dc3"
+                  transaction['call_type'] = 'swapExactCLOForTokens'
+                when "0x38ed1739"
+                  transaction['call_type'] = 'swapExactTokensForTokens'
+                when "0xa6e83852"
+                  transaction['call_type'] = 'swapTokensForExactCLO'
+                when "0x8803dbee"
+                  transaction['call_type'] = 'swapTokensForExactTokens'
                 when "0xa9059cbb"
                   transaction['call_type'] = 'TokenTransfer'
                   transaction['symbol'] = find_symbol(transaction['to'])
   #                transaction['to'] = transaction['input'][10, 64]
                   transaction['to'] = "0x#{transaction['input'][34, 40]}"
                   transaction['value'] = "#{transaction['input'][74, 64].to_i(16) / power.to_i.to_f}"
-                when "0x"
-                  transaction['call_type'] = 'Transfer'
-                  transaction['symbol'] = "CLO"
-                  transaction['value'] = "#{transaction['value'].to_i(16) / power.to_i.to_f}"
-                when "0xa2e62045", "0x82ab890a"
-                  transaction['call_type'] = 'update'
-                when "0x40c10f19"
-                  transaction['call_type'] = 'mint'
-                when "0x78be0ad4", "0xcd948855"
-                  transaction['call_type'] = 'withdraw_stake'
-                when "0x5d8c85ef"
-                  transaction['call_type'] = 'start_staking'
-                when "0x8f995234", "0x4e71d92d"
-                  transaction['call_type'] = 'claim'
-                when "0xfe3f3f02"
-                  transaction['call_type'] = 'setSalary'
-                when "0x957138a4"
-                  transaction['call_type'] = 'setStop'
-                when "0xc4d66de8", "0x1624f6c6"
-                  transaction['call_type'] = 'initialize'
-                when "0x96d4f640"
-                  transaction['call_type'] = 'createOrder'
-                when "0xbd000546"
-                  transaction['call_type'] = 'DeleteOrder'
-                when "0x514fcac7"
-                  transaction['call_type'] = 'cancelOrder'
-                when "0xd9caed12"
-                  transaction['call_type'] = 'withdraw'
-                when "0x83f818b4"
-                  transaction['call_type'] = 'game'
-                when "0xc180f4f1"
-                  transaction['call_type'] = 'addClassProperty'
-                when "0x3054d9cb"
-                  transaction['call_type'] = 'modifyClassProperty'
-                when "0xc98e0c3c"
-                  transaction['call_type'] = 'silentTransfer'
-                when "0x25498c75"
-                  transaction['call_type'] = 'addNewTokenClass'
-                when "0x11411e08"
-                  transaction['call_type'] = 'sellToken'
-                when "0xa0169f0d"
-                  transaction['call_type'] = 'createDumperShield'
-                when "0x2da91f95"
-                  transaction['call_type'] = 'migrationWithdraw'
-                when "0x3659cfe6"
-                  transaction['call_type'] = 'upgradeTo'
                 when "0x335a9406"
                   transaction['call_type'] = 'transfer'
-                when "0xcf456ae7"
-                  transaction['call_type'] = 'setMinter'
-                when "0xbf3c35c3"
-                  transaction['call_type'] = 'migrateCLOE'
+                when "0xf2fde38b"
+                  transaction['call_type'] = 'transferOwnership'
+                when "0xa2e62045", "0x82ab890a"
+                  transaction['call_type'] = 'update'
+                when "0x3659cfe6"
+                  transaction['call_type'] = 'upgradeTo'
+                when "0xd9caed12"
+                  transaction['call_type'] = 'withdraw'
+                when "0x78be0ad4", "0xcd948855"
+                  transaction['call_type'] = 'withdraw_stake'
                 else
                   transaction['call_type'] = 'unknown'
                 end
