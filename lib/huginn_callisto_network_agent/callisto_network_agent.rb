@@ -530,6 +530,10 @@ module Agents
                   transaction['call_type'] = 'upgradeTo'
                 when "0x335a9406"
                   transaction['call_type'] = 'transfer'
+                when "0xcf456ae7"
+                  transaction['call_type'] = 'setMinter'
+                when "0xbf3c35c3"
+                  transaction['call_type'] = 'migrateCLOE'
                 else
                   transaction['call_type'] = 'unknown'
                 end
