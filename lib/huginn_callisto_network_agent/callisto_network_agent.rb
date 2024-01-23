@@ -456,6 +456,8 @@ module Agents
                   transaction['call_type'] = 'activateNode'
                 when "0xc180f4f1"
                   transaction['call_type'] = 'addClassProperty'
+                when "0xe8e33700"
+                  transaction['call_type'] = 'addLiquidity'
                 when "0x25498c75"
                   transaction['call_type'] = 'addNewTokenClass'
                 when "0xb199892a"
