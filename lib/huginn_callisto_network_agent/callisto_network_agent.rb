@@ -53,7 +53,8 @@ module Agents
         'changes_only' => 'true',
         'filter_for_method_id' => '',
         'first_block' => '',
-        'last_block' => ''
+        'last_block' => '',
+        'sql_db' => ''
       }
     end
 
@@ -61,7 +62,7 @@ module Agents
     form_configurable :emit_events, type: :boolean
     form_configurable :expected_receive_period_in_days, type: :string
     form_configurable :changes_only, type: :boolean
-    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx', 'get_tx_by_address_with_filter', 'start_cs_clo', 'withdraw_cs_clo', 'get_tx_stats', 'callosha_slots', '2bears_check_order_by_id']
+    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx', 'get_tx_by_address_with_filter', 'start_cs_clo', 'withdraw_cs_clo', 'get_tx_stats', 'callosha_slots', '2bears_check_order_by_id', 'get_abi_json']
     form_configurable :wallet, type: :string
     form_configurable :rpc_server, type: :string
     form_configurable :wallet_password, type: :string
@@ -71,8 +72,9 @@ module Agents
     form_configurable :filter_for_method_id, type: :string
     form_configurable :first_block, type: :string
     form_configurable :last_block, type: :string
+    form_configurable :sql_db, type: :string
     def validate_options
-      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'withdraw_cs_clo' 'get_tx_stats' 'callosha_slots' '2bears_check_order_by_id'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx get_tx_by_address_with_filter start_cs_clo withdraw_cs_clo get_tx_stats callosha_slots 2bears_check_order_by_id).include?(interpolated['type'])
+      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'withdraw_cs_clo' 'get_tx_stats' 'callosha_slots' '2bears_check_order_by_id' 'get_abi_json'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx get_tx_by_address_with_filter start_cs_clo withdraw_cs_clo get_tx_stats callosha_slots 2bears_check_order_by_id get_abi_json).include?(interpolated['type'])
 
       unless options['wallet_password'].present? || !['clo_sendtx' 'start_cs_clo' 'withdraw_cs_clo'].include?(options['type'])
         errors.add(:base, "wallet_password is a required field")
@@ -94,7 +96,7 @@ module Agents
         errors.add(:base, "rpc_server is a required field")
       end
 
-      unless options['wallet'].present? || !['get_balance' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'callosha_slots'].include?(options['type'])
+      unless options['wallet'].present? || !['get_balance' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'callosha_slots' 'get_abi_json'].include?(options['type'])
         errors.add(:base, "wallet is a required field")
       end
 
@@ -189,6 +191,52 @@ module Agents
         found_symbol = 'unknown'
       end
       return found_symbol
+    end
+
+    def function_finder(contract_address=interpolated['wallet'],bytes_signature)
+
+      db = SQLite3::Database.new(interpolated['sql_db'])
+      result = db.get_first_row('SELECT text_signature FROM signatures WHERE bytes_signature = ? AND contract_address = ?', bytes_signature, contract_address)
+      db.close
+
+      if result
+        return result[0].split('(').first
+      else
+        db = SQLite3::Database.new(interpolated['sql_db'])
+        result = db.get_first_row('SELECT text_signature FROM signatures WHERE bytes_signature = ?', bytes_signature)
+        db.close
+        if result
+          return result[0].split('(').first
+        else
+          return 'unknown'
+        end
+      end
+    end
+
+    def get_abi_json(contract_address,internal=false)
+
+      uri = URI.parse("https://explorer.callisto.network/api?module=contract&action=getabi&address=#{contract_address}")
+      request = Net::HTTP::Get.new(uri)
+      request["Accept"] = "application/json"
+
+      req_options = {
+        use_ssl: uri.scheme == "https",
+      }
+
+      response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+        http.request(request)
+      end
+
+      log_curl_output(response.code,response.body)
+
+      payload = JSON.parse(response.body)
+
+      if internal == false
+        create_event payload: payload
+      else
+        return payload
+      end
+
     end
 
     def get_tx_receipt(hash)
@@ -450,96 +498,14 @@ module Agents
                   transaction['symbol'] = "CLO"
                   transaction['value'] = "#{transaction['value'].to_i(16) / power.to_i.to_f}"
                 when "0xb88a802f"
-                  transaction['call_type'] = 'claimReward'
                   transaction['symbol'] = find_symbol(transaction['to'])
-                when "0xe80233c6"
-                  transaction['call_type'] = 'activateNode'
-                when "0xc180f4f1"
-                  transaction['call_type'] = 'addClassProperty'
-                when "0xe8e33700"
-                  transaction['call_type'] = 'addLiquidity'
-                when "0x25498c75"
-                  transaction['call_type'] = 'addNewTokenClass'
-                when "0xb199892a"
-                  transaction['call_type'] = 'addNode'
-                when "0x01026099"
-                  transaction['call_type'] = 'addTokens'
-                when "0x095ea7b3"
-                  transaction['call_type'] = 'approve'
-                when "0x514fcac7"
-                  transaction['call_type'] = 'cancelOrder'
-                when "0x8f995234", "0x4e71d92d"
-                  transaction['call_type'] = 'claim'
-                when "0xa0169f0d"
-                  transaction['call_type'] = 'createDumperShield'
-                when "0x96d4f640"
-                  transaction['call_type'] = 'createOrder'
-                when "0x65814455"
-                  transaction['call_type'] = 'deactivateNode'
-                when "0xbd000546"
-                  transaction['call_type'] = 'DeleteOrder'
-                when "0x1da7ee0d"
-                  transaction['call_type'] = 'depositPosition'
-                when "0x487cda0d"
-                  transaction['call_type'] = 'depositTokens'
-                when "0x83f818b4"
-                  transaction['call_type'] = 'game'
-                when "0xc4d66de8", "0x1624f6c6"
-                  transaction['call_type'] = 'initialize'
-                when "0xbf3c35c3"
-                  transaction['call_type'] = 'migrateCLOE'
-                when "0x2da91f95"
-                  transaction['call_type'] = 'migrationWithdraw'
-                when "0x40c10f19"
-                  transaction['call_type'] = 'mint'
-                when "0x3054d9cb"
-                  transaction['call_type'] = 'modifyClassProperty'
-                when "0xb2b99ec9"
-                  transaction['call_type'] = 'removeNode'
-                when "0x11411e08"
-                  transaction['call_type'] = 'sellToken'
-                when "0xcf456ae7"
-                  transaction['call_type'] = 'setMinter'
-                when "0xcdfdb7dc"
-                  transaction['call_type'] = 'setRatios'
-                when "0xfe3f3f02"
-                  transaction['call_type'] = 'setSalary'
-                when "0x957138a4"
-                  transaction['call_type'] = 'setStop'
-                when "0xc98e0c3c"
-                  transaction['call_type'] = 'silentTransfer'
-                when "0x84daaf54"
-                  transaction['call_type'] = 'stakingMigrate'
-                when "0x5d8c85ef"
-                  transaction['call_type'] = 'start_staking'
-                when "0x2e9b3dc3"
-                  transaction['call_type'] = 'swapExactCLOForTokens'
-                when "0x38ed1739"
-                  transaction['call_type'] = 'swapExactTokensForTokens'
-                when "0xa6e83852"
-                  transaction['call_type'] = 'swapTokensForExactCLO'
-                when "0x8803dbee"
-                  transaction['call_type'] = 'swapTokensForExactTokens'
                 when "0xa9059cbb"
-                  transaction['call_type'] = 'TokenTransfer'
                   transaction['symbol'] = find_symbol(transaction['to'])
   #                transaction['to'] = transaction['input'][10, 64]
                   transaction['to'] = "0x#{transaction['input'][34, 40]}"
                   transaction['value'] = "#{transaction['input'][74, 64].to_i(16) / power.to_i.to_f}"
-                when "0x335a9406"
-                  transaction['call_type'] = 'transfer'
-                when "0xf2fde38b"
-                  transaction['call_type'] = 'transferOwnership'
-                when "0xa2e62045", "0x82ab890a"
-                  transaction['call_type'] = 'update'
-                when "0x3659cfe6"
-                  transaction['call_type'] = 'upgradeTo'
-                when "0xd9caed12"
-                  transaction['call_type'] = 'withdraw'
-                when "0x78be0ad4", "0xcd948855"
-                  transaction['call_type'] = 'withdraw_stake'
-                else
-                  transaction['call_type'] = 'unknown'
+#                else
+#                  transaction['call_type'] = 'unknown'
                 end
                 if transaction['input'] != '0x'
                   hex_string = transaction['input'].dup
@@ -554,6 +520,10 @@ module Agents
                     transaction['input_utf8'] = decoded_string
                   end
                 end
+                if !interpolated['sql_db'].empty?
+                  transaction['call_type'] = function_finder(transaction['to'],transaction['input'][0, 10])
+                end
+#                log "#{transaction['input'][0, 10]} -> #{function_finder(transaction['to'],true,transaction['input'][0, 10])}"
                 create_event payload: transaction
               end
             end
@@ -1667,6 +1637,8 @@ module Agents
         callosha_slots()
       when "2bears_check_order_by_id"
         twobears_check_order_by_id()
+      when "get_abi_json"
+        get_abi_json(interpolated['wallet'],false)
       else
         log "Error: type has an invalid value (#{type})"
       end
