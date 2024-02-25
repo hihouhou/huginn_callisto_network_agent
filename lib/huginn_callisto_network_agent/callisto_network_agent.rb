@@ -426,6 +426,9 @@ module Agents
     def get_tx_stats()
       all_miners = ['0xf34eaf6e2cf4744b5e29734295135c4213d59149', '0xed15b7b7b5dc81daae277a081b47a04c3a8bea1b' ,'0xd125b3b146d21d058edac7a5b5f7481a571e4c46', '0xe683de43ccfbef16424ecb577f288cf343dfbc5a', '0x0073cf1b9230cf3ee8cab1971b8dbef21ea7b595', '0x40b67778d97a7d15a519d907ed991948e8ea486c', '0x8845ee5cae61b807678415bb8a68773df9d48f8e', '0x52f0458c70af5cdeb555cad800add5f82c3e59f7', '0xd06bb917c099acf24d43552b5aa760aeef7cd4aa', '0xf35074bbd0a9aee46f4ea137971feec024ab704e', '0xd144e30a0571aaf0d0c050070ac435deba461fab', '0x8057c50c6d72f4399862fefbc8d3b8a8757cde57', '0xfbf679d6ed0cb9747e05e7e8ae06e890e6bf2b66', '0x11905bd0863ba579023f662d1935e39d0c671933', '0xe4f3cab1f11d5a917ac73c80927e64ee4b1a445a', '0xae83a3e136e6714e6c1e5483950936d7872fb999', '0x39ec1c88a7a7c1a575e8c8f42eff7630d9278179', '0xd6d27255eaef8c3fcb5433acb5494bf04cb5f2c3', '0x004730417cd2b1d19f6be2679906ded4fa8a64e2', '0x89308111f17a395b82f1e5a2824bd01fd13a53b5', '0x800f25eb68a06ff9671605bd450c29e80f593e0a', '0xa5d9018f6c99ec3230633c1187c5cb607c704ed8', '0xfe59743b65f2afec200ce279a289cb4a43eb7eeb', '0x811bad1a4041a9f6ed8fc2f4e9d421dc82626f81', '0xbd12b4511ec9fd1cf481d5643f307252ae6f55e2', '0x5f7661e493d4f1a318c02e9383568597e8a09b5a', '0xe0bac765ca88706a12e4f5a9c0e92dc823fe6293', '0x40c48b386e15981df5a10552cb97ee6d232c8547', '0x458ddc6a7e924554756f95715a53bf948560ee38', '0x3c6b9edb1f8ec6c85436b7cb384eb607489c732f', '0x2a1efdf9f09869a82e5e6b0f3736aabcb5381206', '0xf30a30315d5214e490458d0511595e42b3d917d0', '0x8c2fdc530815eb4267c8b12f10adafc4ca73484a', '0x254b0e1dee486908345e608da64afe35caa02a1c']
       shitty_wallets = ['0x7971d8defa89bf68ff4142b2bb1e1e3866927b36', '0x33344541086c709fe585caeabc83e5947e783333', '0xcbb8aaf930497c7bd0de6b19903410698e8adab4', '0xc352d245f25fec51ff15c77fc5bf767bf655276a', '0x9daa24510951bc0ac5d1e4f89de5efd89cc8e0b0', '0x941dab361e6d3f0b310f78c2c9eb6779608de0c3', '0x8877e6657f48aee236b47eb1c65be8e7a44f11f8', '0x1a146e329333919542cdb6d2d87de370275124c6', '0xf7d862d42976662d649cc356f4ca3854d595d53d', '0xd125b9d1415b77e0951d5b91dce3ce5d9e4375d0', '0xb94f03ad1b8ddddb82b08cd038b652cbfc47fbb4', '0x8832abcd7248ed2bd740d3eafdeb774ab8332623', '0x6dfb81b6945967e57052e4132a9ca328f8d12f7c', '0x11817fa65a9c2f68fc03bbbc9f2113d59b96908b']
+      callosha_address = '0xb89fd29c048e974f9c3bc320c0b68651b434c159'
+      twobears_address = '0x78afc46df1d3eb5cff7044d288a453fe43e17310'
+      vipwarz_address = '0x2f48b8887d2d5d5b718c9f6516b44ba1c1bb8db1'
       internal = true
       tx_list = []
       burnt_ether = 0
@@ -446,11 +449,14 @@ module Agents
       miners_count = tx_list.select { |hash| all_miners.include?(hash['from']) }
 #      log "miners_count #{miners_count.count}"
       shitty_count = tx_list.select { |hash| shitty_wallets.include?(hash['from']) }
+      callosha_count = tx_list.select { |hash| hash['to'] == callosha_address }
+      twobears_count = tx_list.select { |hash| hash['to'] == twobears_address }
+      vipwarz_count = tx_list.select { |hash| hash['to'] == vipwarz_address }
 #      log "shitty_count #{shitty_count.count}"
       active = tx_list.map { |p| p['from'] }.uniq.count
 #      log "top_count : #{top_count}"
 #      log "total : #{tx_list.count}"
-      create_event :payload => { 'total_tx' => "#{tx_list.count}", 'total_active' => "#{active}", 'burnt_clo' => "#{burnt_ether}", 'top_wallet': {'address' => "#{top_tx}", 'percentage' => "#{percentage(top_count.to_i,tx_list.count.to_i)}"}, 'shitty': {'address': 'shitty', 'shitty_percentage' => "#{percentage(shitty_count.count,tx_list.count.to_i)}"}, 'miners': {'address': "miners", 'percentage' => "#{percentage(miners_count.count,tx_list.count.to_i)}"}}
+      create_event :payload => { 'total_tx' => "#{tx_list.count}", 'total_active' => "#{active}", 'burnt_clo' => "#{burnt_ether}", 'top_wallet': {'address' => "#{top_tx}", 'percentage' => "#{percentage(top_count.to_i,tx_list.count.to_i)}"}, 'shitty': {'address': 'shitty', 'shitty_percentage' => "#{percentage(shitty_count.count,tx_list.count.to_i)}"}, 'miners': {'address': "miners", 'percentage' => "#{percentage(miners_count.count,tx_list.count.to_i)}"}, 'callosha': {'address': callosha_address, 'percentage' => "#{percentage(callosha_count.count,tx_list.count.to_i)}"}, 'twobears': {'address': twobears_address, 'percentage' => "#{percentage(twobears_count.count,tx_list.count.to_i)}"}, 'vipwarz': {'address': vipwarz_address, 'percentage' => "#{percentage(vipwarz_count.count,tx_list.count.to_i)}"}}
 
     end
 
@@ -499,6 +505,10 @@ module Agents
                   transaction['value'] = "#{transaction['value'].to_i(16) / power.to_i.to_f}"
                 when "0xb88a802f"
                   transaction['symbol'] = find_symbol(transaction['to'])
+                when "0x6bd7a97a"
+                  transaction['vesting_receiver'] = "0x#{transaction['input'][34, 40]}"
+                  transaction['vesting_amount'] = "#{transaction['input'][74, 64].to_i(16) / power.to_i.to_f}"
+                  transaction['vesting_symbol'] = "DIFF"
                 when "0xa9059cbb"
                   transaction['symbol'] = find_symbol(transaction['to'])
   #                transaction['to'] = transaction['input'][10, 64]
