@@ -187,6 +187,8 @@ module Agents
         found_symbol = 'SOY'
       when "0x1eaa43544daa399b87eecfcc6fa579d5ea4a6187"
         found_symbol = 'CLOE'
+      when "0xbf6c50889d3a620eb42c0f188b65ade90de958c4"
+        found_symbol = 'BUSDT'
       else
         found_symbol = 'unknown'
       end
