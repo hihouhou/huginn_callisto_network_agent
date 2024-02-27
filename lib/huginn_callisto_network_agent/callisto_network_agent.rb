@@ -533,7 +533,9 @@ module Agents
                   end
                 end
                 if !interpolated['sql_db'].empty?
-                  transaction['call_type'] = function_finder(transaction['to'],transaction['input'][0, 10])
+                  if !transaction['call_type'].present?
+                    transaction['call_type'] = function_finder(transaction['to'],transaction['input'][0, 10])
+                  end
                 end
 #                log "#{transaction['input'][0, 10]} -> #{function_finder(transaction['to'],true,transaction['input'][0, 10])}"
                 create_event payload: transaction
