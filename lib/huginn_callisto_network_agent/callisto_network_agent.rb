@@ -195,6 +195,25 @@ module Agents
       return found_symbol
     end
 
+    def owner_finder(address=interpolated['wallet'])
+
+      db = SQLite3::Database.new(interpolated['sql_db'])
+      result = db.get_first_row('SELECT name FROM directory WHERE address = ?', address)
+      db.close
+
+      if result
+        if interpolated['debug'] == 'true'
+          log "#{result[0]} found in sqldb"
+        end
+        return result[0]
+      else
+        if interpolated['debug'] == 'true'
+          log "nothing found in sqldb"
+        end
+        return nil
+      end
+    end
+
     def function_finder(contract_address=interpolated['wallet'],bytes_signature)
 
       db = SQLite3::Database.new(interpolated['sql_db'])
@@ -537,6 +556,14 @@ module Agents
                 if !interpolated['sql_db'].empty?
                   if !transaction['call_type'].present?
                     transaction['call_type'] = function_finder(transaction['to'],transaction['input'][0, 10])
+                  end
+                  find_to = owner_finder(transaction['to'])
+                  if !find_to.nil?
+                    transaction['to_resolved'] = find_to
+                  end
+                  find_from = owner_finder(transaction['from'])
+                  if !find_from.nil?
+                    transaction['from_resolved'] = find_from
                   end
                 end
 #                log "#{transaction['input'][0, 10]} -> #{function_finder(transaction['to'],true,transaction['input'][0, 10])}"
