@@ -451,6 +451,7 @@ module Agents
       slotmachine_address = '0x7777265dc7fd2a15a7f2e8d8ad87b3daec677777'
       twobears_address = '0x78afc46df1d3eb5cff7044d288a453fe43e17310'
       vipwarz_address = '0x2f48b8887d2d5d5b718c9f6516b44ba1c1bb8db1'
+      dead_address = '0x000000000000000000000000000000000000dead'
       internal = true
       tx_list = []
       burnt_ether = 0
@@ -459,11 +460,21 @@ module Agents
         gas_used = transactions['result']['gasUsed'].to_i(16)
         transactions['result']['transactions'].each do |tx|
           if !tx.empty?
-            gas_price = tx['gasPrice'].to_i(16)
-            fees = gas_price * gas_used.to_f / 10**18
             tx_list << tx
+            if tx['type'] == "0x2"
+              gas_price = tx['gasPrice'].to_i(16)
+              fees = gas_price * gas_used.to_f / 10**18
+            else
+              fees = 0
+            end
+            if tx['to'] == dead_address
+              burnt = tx['value'].to_i(16) / 10**18
+            else
+              burnt = 0
+            end
           end
           burnt_ether += fees
+          burnt_ether += burnt
         end
       end
       top_tx = most_common_from(tx_list)
