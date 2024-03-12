@@ -465,8 +465,6 @@ module Agents
             if tx['type'] == "0x2"
               gas_fee = transactions['result']['baseFeePerGas'].to_i(16)
               fees = ( transactions['result']['gasUsed'].to_i(16) * gas_fee.to_f ) / (10 ** 18)
-              log gas_fee
-              log fees
             else
               fees = 0
             end
@@ -484,16 +482,12 @@ module Agents
       top_tx = most_common_from(tx_list)
       top_count = tx_list.count { |hash| hash['from'] == top_tx }
       miners_count = tx_list.select { |hash| all_miners.include?(hash['from']) }
-#      log "miners_count #{miners_count.count}"
       shitty_count = tx_list.select { |hash| shitty_wallets.include?(hash['from']) }
       callosha_count = tx_list.select { |hash| hash['to'] == callosha_address }
       twobears_count = tx_list.select { |hash| hash['to'] == twobears_address }
       vipwarz_count = tx_list.select { |hash| hash['to'] == vipwarz_address }
       slotmachine_count = tx_list.select { |hash| hash['to'] == slotmachine_address }
-#      log "shitty_count #{shitty_count.count}"
       active = tx_list.map { |p| p['from'] }.uniq.count
-#      log "top_count : #{top_count}"
-#      log "total : #{tx_list.count}"
       create_event :payload => { 'total_tx' => "#{tx_list.count}", 'total_active' => "#{active}", 'burnt_clo' => "#{burnt_clo}", 'top_wallet': {'address' => "#{top_tx}", 'percentage' => "#{percentage(top_count.to_i,tx_list.count.to_i)}"}, 'shitty': {'address': 'shitty', 'shitty_percentage' => "#{percentage(shitty_count.count,tx_list.count.to_i)}"}, 'miners': {'address': "miners", 'percentage' => "#{percentage(miners_count.count,tx_list.count.to_i)}"}, 'callosha': {'address': callosha_address, 'percentage' => "#{percentage(callosha_count.count,tx_list.count.to_i)}"}, 'twobears': {'address': twobears_address, 'percentage' => "#{percentage(twobears_count.count,tx_list.count.to_i)}"}, 'vipwarz': {'address': vipwarz_address, 'percentage' => "#{percentage(vipwarz_count.count,tx_list.count.to_i)}"}, 'slotmachine': {'address': slotmachine_address, 'percentage' => "#{percentage(slotmachine_count.count,tx_list.count.to_i)}"}}
 
     end
