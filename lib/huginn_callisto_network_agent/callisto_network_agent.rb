@@ -454,29 +454,33 @@ module Agents
       dead_address = '0x000000000000000000000000000000000000dead'
       internal = true
       tx_list = []
-      burnt_ether = 0
+      burnt_clo = 0
+      burnt_type2 = 0
+      burnt_dead = 0
       (interpolated['first_block']..interpolated['last_block']).each do |i|
         transactions = get_data(i.to_i,internal)
-        gas_used = transactions['result']['gasUsed'].to_i(16)
         transactions['result']['transactions'].each do |tx|
           if !tx.empty?
             tx_list << tx
             if tx['type'] == "0x2"
-              gas_price = tx['gasPrice'].to_i(16)
-              fees = gas_price * gas_used.to_f / 10**18
+              gas_fee = transactions['result']['baseFeePerGas'].to_i(16)
+              fees = ( transactions['result']['gasUsed'].to_i(16) * gas_fee.to_f ) / (10 ** 18)
+              log gas_fee
+              log fees
             else
               fees = 0
             end
             if tx['to'] == dead_address
-              burnt = tx['value'].to_i(16) / 10**18
+              burnt = tx['value'].to_i(16).to_f / 10**18
             else
               burnt = 0
             end
           end
-          burnt_ether += fees
-          burnt_ether += burnt
+          burnt_type2 += fees
+          burnt_dead += burnt
         end
       end
+      burnt_clo = ( burnt_type2 / tx_list.count ) + burnt_dead
       top_tx = most_common_from(tx_list)
       top_count = tx_list.count { |hash| hash['from'] == top_tx }
       miners_count = tx_list.select { |hash| all_miners.include?(hash['from']) }
@@ -490,7 +494,7 @@ module Agents
       active = tx_list.map { |p| p['from'] }.uniq.count
 #      log "top_count : #{top_count}"
 #      log "total : #{tx_list.count}"
-      create_event :payload => { 'total_tx' => "#{tx_list.count}", 'total_active' => "#{active}", 'burnt_clo' => "#{burnt_ether}", 'top_wallet': {'address' => "#{top_tx}", 'percentage' => "#{percentage(top_count.to_i,tx_list.count.to_i)}"}, 'shitty': {'address': 'shitty', 'shitty_percentage' => "#{percentage(shitty_count.count,tx_list.count.to_i)}"}, 'miners': {'address': "miners", 'percentage' => "#{percentage(miners_count.count,tx_list.count.to_i)}"}, 'callosha': {'address': callosha_address, 'percentage' => "#{percentage(callosha_count.count,tx_list.count.to_i)}"}, 'twobears': {'address': twobears_address, 'percentage' => "#{percentage(twobears_count.count,tx_list.count.to_i)}"}, 'vipwarz': {'address': vipwarz_address, 'percentage' => "#{percentage(vipwarz_count.count,tx_list.count.to_i)}"}, 'slotmachine': {'address': slotmachine_address, 'percentage' => "#{percentage(slotmachine_count.count,tx_list.count.to_i)}"}}
+      create_event :payload => { 'total_tx' => "#{tx_list.count}", 'total_active' => "#{active}", 'burnt_clo' => "#{burnt_clo}", 'top_wallet': {'address' => "#{top_tx}", 'percentage' => "#{percentage(top_count.to_i,tx_list.count.to_i)}"}, 'shitty': {'address': 'shitty', 'shitty_percentage' => "#{percentage(shitty_count.count,tx_list.count.to_i)}"}, 'miners': {'address': "miners", 'percentage' => "#{percentage(miners_count.count,tx_list.count.to_i)}"}, 'callosha': {'address': callosha_address, 'percentage' => "#{percentage(callosha_count.count,tx_list.count.to_i)}"}, 'twobears': {'address': twobears_address, 'percentage' => "#{percentage(twobears_count.count,tx_list.count.to_i)}"}, 'vipwarz': {'address': vipwarz_address, 'percentage' => "#{percentage(vipwarz_count.count,tx_list.count.to_i)}"}, 'slotmachine': {'address': slotmachine_address, 'percentage' => "#{percentage(slotmachine_count.count,tx_list.count.to_i)}"}}
 
     end
 
