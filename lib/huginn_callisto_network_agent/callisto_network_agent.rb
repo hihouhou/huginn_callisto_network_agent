@@ -455,18 +455,19 @@ module Agents
       internal = true
       tx_list = []
       burnt_clo = 0
-      burnt_type2 = 0
       burnt_dead = 0
       (interpolated['first_block']..interpolated['last_block']).each do |i|
         transactions = get_data(i.to_i,internal)
+        burnt_per_block = 0
+        burnt_type2_per_block = 0
+        fees = 0
         transactions['result']['transactions'].each do |tx|
+          gas_fee = transactions['result']['baseFeePerGas'].to_i(16)
           if !tx.empty?
             tx_list << tx
             if tx['type'] == "0x2"
-              gas_fee = transactions['result']['baseFeePerGas'].to_i(16)
-              fees = ( transactions['result']['gasUsed'].to_i(16) * gas_fee.to_f ) / (10 ** 18)
-            else
-              fees = 0
+              tx_hash_info = get_tx_receipt(tx['hash'])
+              fees = ( tx_hash_info['result']['gasUsed'].to_i(16) * gas_fee.to_f ) / (10 ** 18)
             end
             if tx['to'] == dead_address
               burnt = tx['value'].to_i(16).to_f / 10**18
@@ -474,11 +475,12 @@ module Agents
               burnt = 0
             end
           end
-          burnt_type2 += fees
+          burnt_type2_per_block += fees
           burnt_dead += burnt
         end
+        burnt_per_block += ( burnt_dead + burnt_type2_per_block )
+        burnt_clo += burnt_per_block
       end
-      burnt_clo = ( burnt_type2 / tx_list.count ) + burnt_dead
       top_tx = most_common_from(tx_list)
       top_count = tx_list.count { |hash| hash['from'] == top_tx }
       miners_count = tx_list.select { |hash| all_miners.include?(hash['from']) }
