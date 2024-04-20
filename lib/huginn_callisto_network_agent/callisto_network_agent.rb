@@ -198,7 +198,7 @@ module Agents
     def owner_finder(address=interpolated['wallet'])
 
       db = SQLite3::Database.new(interpolated['sql_db'])
-      result = db.get_first_row('SELECT name FROM directory WHERE address = ?', address)
+      result = db.get_first_row('SELECT name FROM directory WHERE address = ?', [address])
       db.close
 
       if result
@@ -217,14 +217,14 @@ module Agents
     def function_finder(contract_address=interpolated['wallet'],bytes_signature)
 
       db = SQLite3::Database.new(interpolated['sql_db'])
-      result = db.get_first_row('SELECT text_signature FROM signatures WHERE bytes_signature = ? AND contract_address = ?', bytes_signature, contract_address)
+      result = db.get_first_row('SELECT text_signature FROM signatures WHERE bytes_signature = ? AND contract_address = ?', [bytes_signature, contract_address])
       db.close
 
       if result
         return result[0].split('(').first
       else
         db = SQLite3::Database.new(interpolated['sql_db'])
-        result = db.get_first_row('SELECT text_signature FROM signatures WHERE bytes_signature = ?', bytes_signature)
+        result = db.get_first_row('SELECT text_signature FROM signatures WHERE bytes_signature = ?', [bytes_signature])
         db.close
         if result
           return result[0].split('(').first
