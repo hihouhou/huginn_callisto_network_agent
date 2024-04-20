@@ -62,7 +62,7 @@ module Agents
     form_configurable :emit_events, type: :boolean
     form_configurable :expected_receive_period_in_days, type: :string
     form_configurable :changes_only, type: :boolean
-    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx', 'get_tx_by_address_with_filter', 'start_cs_clo', 'withdraw_cs_clo', 'get_tx_stats', 'callosha_slots', '2bears_check_order_by_id', 'get_abi_json']
+    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx', 'get_tx_by_address_with_filter', 'start_cs_clo', 'withdraw_cs_clo', 'get_tx_stats', 'callosha_slots', '2bears_check_order_by_id', 'get_abi_json', 'dao_auto_claim' 'dao_check_missing_vote']
     form_configurable :wallet, type: :string
     form_configurable :rpc_server, type: :string
     form_configurable :wallet_password, type: :string
@@ -74,13 +74,13 @@ module Agents
     form_configurable :last_block, type: :string
     form_configurable :sql_db, type: :string
     def validate_options
-      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'withdraw_cs_clo' 'get_tx_stats' 'callosha_slots' '2bears_check_order_by_id' 'get_abi_json'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx get_tx_by_address_with_filter start_cs_clo withdraw_cs_clo get_tx_stats callosha_slots 2bears_check_order_by_id get_abi_json).include?(interpolated['type'])
+      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'withdraw_cs_clo' 'get_tx_stats' 'callosha_slots' '2bears_check_order_by_id' 'get_abi_json' 'dao_auto_claim' 'dao_check_missing_vote'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx get_tx_by_address_with_filter start_cs_clo withdraw_cs_clo get_tx_stats callosha_slots 2bears_check_order_by_id get_abi_json dao_auto_claim dao_check_missing_vote).include?(interpolated['type'])
 
-      unless options['wallet_password'].present? || !['clo_sendtx' 'start_cs_clo' 'withdraw_cs_clo'].include?(options['type'])
+      unless options['wallet_password'].present? || !['clo_sendtx' 'start_cs_clo' 'withdraw_cs_clo' 'dao_auto_claim'].include?(options['type'])
         errors.add(:base, "wallet_password is a required field")
       end
 
-      unless options['value'].present? || !['clo_sendtx' 'start_cs_clo' 'callosha_slots' '2bears_check_order_by_id'].include?(options['type'])
+      unless options['value'].present? || !['clo_sendtx' 'start_cs_clo' 'callosha_slots' '2bears_check_order_by_id' 'dao_check_missing_vote'].include?(options['type'])
         errors.add(:base, "value is a required field")
       end
 
@@ -96,7 +96,7 @@ module Agents
         errors.add(:base, "rpc_server is a required field")
       end
 
-      unless options['wallet'].present? || !['get_balance' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'callosha_slots' 'get_abi_json'].include?(options['type'])
+      unless options['wallet'].present? || !['get_balance' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'callosha_slots' 'get_abi_json' 'dao_auto_claim'].include?(options['type'])
         errors.add(:base, "wallet is a required field")
       end
 
@@ -255,9 +255,173 @@ module Agents
       if internal == false
         create_event payload: payload
       else
-        return payload
+        return payload['result']
       end
 
+    end
+
+    def dao_get_last_vote_id()
+      uri = URI.parse("#{interpolated['rpc_server']}")
+      request = Net::HTTP::Post.new(uri)
+      request.content_type = "application/json"
+      request.body = JSON.dump({
+        "jsonrpc" => "2.0",
+        "id" => 1,
+        "method" => "eth_call",
+        "params" => [
+          {
+            "data" => "0xbe8e4d19",
+            "to" => "0x810059e1406dedafd1bdca4e0137cba306c0ce36"
+          },
+          "latest"
+        ]
+      })
+
+      req_options = {
+        use_ssl: uri.scheme == "https",
+      }
+
+      response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+        http.request(request)
+      end
+
+      log_curl_output(response.code,response.body)
+
+      return JSON.parse(response.body)['result'].to_i(16)
+    end
+
+    def dao_claim(id)
+      function_id = '0x379607f5'
+      formatted_value = id.to_s(16).rjust(64, '0')
+      data = "#{function_id}#{formatted_value}"
+      log data
+      if interpolated['debug'] == 'true'
+        log "unlocking the wallet"
+      end
+      response = JSON.parse(unlock_wallet())
+      log "response -> #{response}"
+      log "response result -> #{response['result']}"
+      if response['result'] == true
+        if interpolated['debug'] == 'true'
+          log "the wallet is unlocked"
+        end
+        uri = URI.parse("#{interpolated['rpc_server']}")
+        request = Net::HTTP::Post.new(uri)
+        request.content_type = "application/json"
+        request.body = JSON.dump({
+          "jsonrpc" => "2.0",
+          "id" => 1,
+          "method" => "eth_sendTransaction",
+          "params" => [
+            {
+              "from" => "#{interpolated['wallet']}",
+              "data" => "0x379607f5#{to_hex(id)}",
+              "to" => "0x810059e1406dedafd1bdca4e0137cba306c0ce36"
+            }
+          ]
+        })
+
+        req_options = {
+          use_ssl: uri.scheme == "https",
+        }
+
+        response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+          http.request(request)
+        end
+
+        log_curl_output(response.code,response.body)
+
+        return JSON.parse(response.body)
+      else
+      end
+    end
+
+    def dao_get_total_user()
+      uri = URI.parse("#{interpolated['rpc_server']}")
+      request = Net::HTTP::Post.new(uri)
+      request.content_type = "application/json"
+      request.body = JSON.dump({
+        "jsonrpc" => "2.0",
+        "id" => 1,
+        "method" => "eth_call",
+        "params" => [
+          {
+            "data" => "0x40912990",
+            "to" => "0x810059e1406dedafd1bdca4e0137cba306c0ce36"
+          },
+          "latest"
+        ]
+      })
+
+      req_options = {
+        use_ssl: uri.scheme == "https",
+      }
+
+      response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+        http.request(request)
+      end
+
+      log_curl_output(response.code,response.body)
+
+      return JSON.parse(response.body)['result'].to_i(16)
+    end
+
+    def dao_get_users_list(count)
+      uri = URI.parse("http://web3wrapper:5000/dao/getuserslist?&start=1&limit=#{count}")
+      response = Net::HTTP.get_response(uri)
+
+      log_curl_output(response.code,response.body)
+
+      return JSON.parse(response.body)
+    end
+
+    def dao_check_missing_vote()
+      users_list = dao_get_users_list(dao_get_total_user)
+      proposal = dao_check_proposal(interpolated['value'])
+      user_addresses = users_list.map { |user| user['userAddr'] }
+      missing_votes = user_addresses - (proposal['voces_yes'] + proposal['voces_no'])
+      proposal['missing_voces'] = missing_votes
+      create_event payload: proposal
+    end
+
+    def dao_check_claim_list(last_id)
+      uri = URI.parse("http://web3wrapper:5000/dao/getclaimlist?address=#{interpolated['wallet']}&start=0&limit=#{last_id}")
+      response = Net::HTTP.get_response(uri)
+
+      log_curl_output(response.code,response.body)
+
+      return JSON.parse(response.body)
+    end
+
+    def dao_check_proposal(id)
+      uri = URI.parse("http://web3wrapper:5000/dao/getproposal?proposal_id=#{id}")
+      response = Net::HTTP.get_response(uri)
+
+      log_curl_output(response.code,response.body)
+
+      return JSON.parse(response.body)
+    end
+
+    def dao_auto_claim()
+      last_vote_id = dao_get_last_vote_id()
+      user_claim_list = dao_check_claim_list(last_vote_id)
+      start = 0
+      stop = last_vote_id
+      (start..stop).each do |id|
+        if user_claim_list['bool'][id] == true
+          proposal = dao_check_proposal(user_claim_list['uint256'][id])
+          if proposal['status'] == 3 or proposal['status'] == 2
+            dao_claim(user_claim_list['uint256'][id])
+          else
+            if interpolated['debug'] == 'true'
+              log "claim not ready"
+            end
+          end
+        end
+        if interpolated['debug'] == 'true'
+          log "id #{id} : #{user_claim_list['uint256'][id]}"
+        end
+      end
     end
 
     def get_tx_receipt(hash)
@@ -1693,6 +1857,10 @@ module Agents
         twobears_check_order_by_id()
       when "get_abi_json"
         get_abi_json(interpolated['wallet'],false)
+      when "dao_auto_claim"
+        dao_auto_claim()
+      when "dao_check_missing_vote"
+        dao_check_missing_vote()
       else
         log "Error: type has an invalid value (#{type})"
       end
