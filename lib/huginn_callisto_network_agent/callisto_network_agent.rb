@@ -64,7 +64,7 @@ module Agents
     form_configurable :expected_receive_period_in_days, type: :string
     form_configurable :changes_only, type: :boolean
     form_configurable :vote, type: :boolean
-    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx', 'get_tx_by_address_with_filter', 'start_cs_clo', 'withdraw_cs_clo', 'get_tx_stats', 'callosha_slots', '2bears_check_order_by_id', 'get_abi_json', 'dao_auto_claim', 'dao_check_missing_vote', 'dao_vote_id']
+    form_configurable :type, type: :array, values: ['get_balance', 'net_peerCount', 'net_version', 'eth_protocolVersion', 'eth_gasPrice', 'eth_getTransactionCount', 'stake_reward_clo', 'get_tokens_balance', 'eth_getBlockByNumber', 'soy_farming_soy_clo_pending_rewards', 'soy_farming_soy_cloe_pending_rewards', 'stake_reward_soy', 'soy_farming_soy_btt_pending_rewards', 'soy_cs_pending_rewards', 'clo_sendtx', 'get_tx_by_address_with_filter', 'start_cs_clo', 'withdraw_cs_clo', 'get_tx_stats', 'callosha_slots', '2bears_check_order_by_id', 'get_abi_json', 'dao_auto_claim', 'dao_check_missing_vote', 'dao_vote_id', 'get_cs_stats']
     form_configurable :wallet, type: :string
     form_configurable :rpc_server, type: :string
     form_configurable :wallet_password, type: :string
@@ -76,7 +76,7 @@ module Agents
     form_configurable :last_block, type: :string
     form_configurable :sql_db, type: :string
     def validate_options
-      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'withdraw_cs_clo' 'get_tx_stats' 'callosha_slots' '2bears_check_order_by_id' 'get_abi_json' 'dao_auto_claim' 'dao_check_missing_vote' 'dao_vote_id'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx get_tx_by_address_with_filter start_cs_clo withdraw_cs_clo get_tx_stats callosha_slots 2bears_check_order_by_id get_abi_json dao_auto_claim dao_check_missing_vote dao_vote_id).include?(interpolated['type'])
+      errors.add(:base, "type has invalid value: should be 'get_balance' 'net_peerCount' 'net_version' 'eth_protocolVersion' 'eth_gasPrice' 'eth_getTransactionCount' 'stake_reward_clo' 'get_tokens_balance' 'eth_getBlockByNumber' 'soy_farming_soy_clo_pending_rewards' 'soy_farming_soy_cloe_pending_rewards' 'stake_reward_soy' 'soy_farming_soy_btt_pending_rewards' 'soy_cs_pending_rewards' 'clo_sendtx' 'get_tx_by_address_with_filter' 'start_cs_clo' 'withdraw_cs_clo' 'get_tx_stats' 'callosha_slots' '2bears_check_order_by_id' 'get_abi_json' 'dao_auto_claim' 'dao_check_missing_vote' 'dao_vote_id' 'get_cs_stats'") if interpolated['type'].present? && !%w(get_balance net_peerCount net_version eth_protocolVersion eth_gasPrice eth_getTransactionCount stake_reward_clo get_tokens_balance eth_getBlockByNumber soy_farming_soy_clo_pending_rewards soy_farming_soy_cloe_pending_rewards stake_reward_soy soy_farming_soy_btt_pending_rewards soy_cs_pending_rewards clo_sendtx get_tx_by_address_with_filter start_cs_clo withdraw_cs_clo get_tx_stats callosha_slots 2bears_check_order_by_id get_abi_json dao_auto_claim dao_check_missing_vote dao_vote_id get_cs_stats).include?(interpolated['type'])
 
       unless options['wallet_password'].present? || !['clo_sendtx' 'start_cs_clo' 'withdraw_cs_clo' 'dao_auto_claim'].include?(options['type'])
         errors.add(:base, "wallet_password is a required field")
@@ -453,6 +453,15 @@ module Agents
       log_curl_output(response.code,response.body)
 
       return JSON.parse(response.body)
+    end
+
+    def get_cs_stats()
+      uri = URI.parse("http://web3wrapper:5000/cs/stats_last_30d")
+      response = Net::HTTP.get_response(uri)
+
+      log_curl_output(response.code,response.body)
+
+      create_event payload: response.body
     end
 
     def dao_auto_claim()
@@ -1916,6 +1925,8 @@ module Agents
         dao_check_missing_vote()
       when "dao_vote_id"
         dao_vote_id(interpolated['value'],false)
+      when "get_cs_stats"
+        get_cs_stats()
       else
         log "Error: type has an invalid value (#{type})"
       end
