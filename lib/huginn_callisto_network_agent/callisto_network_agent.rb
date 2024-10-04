@@ -323,7 +323,7 @@ module Agents
         proposal['owner_human_readable'] = owner_finder(proposal['owner_address'].downcase)
         create_event payload: proposal
       elsif memory['last_vote_id'] != payload
-        for i in memory['last_vote_id']..payload do
+        for i in (memory['last_vote_id'] + 1)..payload do
           proposal = dao_check_proposal(i)
         proposal['owner_human_readable'] = owner_finder(proposal['owner_address'].downcase)
           create_event payload: proposal
