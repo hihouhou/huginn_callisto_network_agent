@@ -289,7 +289,9 @@ module Agents
             {
               "from" => "#{interpolated['wallet']}",
               "data" => "0xc9d27afe#{to_hex(id.to_i)}#{to_hex(bool_to_int(interpolated['vote']))}",
-              "to" => "0x810059e1406dedafd1bdca4e0137cba306c0ce36"
+              "to" => "0x810059e1406dedafd1bdca4e0137cba306c0ce36",
+              "gas" => "0x30d40",
+              "gasPrice" => "#{eth_gasPrice(internal)}"
             }
           ]
         })
@@ -366,15 +368,10 @@ module Agents
     end
 
     def dao_claim(id)
-#      function_id = '0x379607f5'
-#      formatted_value = id.to_s(16).rjust(64, '0')
-#      data = "#{function_id}#{formatted_value}"
       if interpolated['debug'] == 'true'
         log "unlocking the wallet"
       end
       response = JSON.parse(unlock_wallet())
-#      log "response -> #{response}"
-#      log "response result -> #{response['result']}"
       if response['result'] == true
         if interpolated['debug'] == 'true'
           log "the wallet is unlocked"
@@ -390,7 +387,9 @@ module Agents
             {
               "from" => "#{interpolated['wallet']}",
               "data" => "0x379607f5#{to_hex(id)}",
-              "to" => "0x810059e1406dedafd1bdca4e0137cba306c0ce36"
+              "to" => "0x810059e1406dedafd1bdca4e0137cba306c0ce36",
+              "gas" => "0x30d40",
+              "gasPrice" => "#{eth_gasPrice(internal)}"
             }
           ]
         })
@@ -567,8 +566,6 @@ module Agents
       contract = "0x7777265DC7FD2a15A7f2E8d8Ad87b3DAec677777"
       power_of_10 = 18
       final_value = interpolated['value'].to_i * 10**power_of_10
-#      log "0x83f818b4000000000000000000000000000000000000000000000000016345785d8a00000000000000000000000000000000000000000000000000000000000000000001"
-#      log "0x83f818b4#{to_hex(max_gain(contract).to_i)}#{to_hex(interpolated['round'].to_i)}"
       if interpolated['debug'] == 'true'
         log "unlocking the wallet"
       end
@@ -591,10 +588,10 @@ module Agents
               "from" => "#{interpolated['wallet']}",
               "value" => "0x#{final_value.to_s(16)}",
               "data" => "0x83f818b4#{to_hex(max_gain(contract).to_i)}#{to_hex(interpolated['round'].to_i)}",
+              "gas" => "0x30d40",
               "gasPrice" => "#{eth_gasPrice(internal)}"
             }
           ],
-#          "gas" => "0x186a0",
           "id" => 1
         })
 
@@ -917,6 +914,7 @@ module Agents
               "from" => "#{interpolated['wallet']}",
               "to" => "#{interpolated['wallet_dest']}",
               "value" => "0x#{final_value.to_s(16)}",
+              "gas" => "0x30d40",
               "gasPrice" => "#{eth_gasPrice(internal)}"
             }
           ],
@@ -965,6 +963,7 @@ module Agents
               "to" => "0x08A7c8be47773546DC5E173d67B0c38AfFfa4b84",
               "data" => "0x5d8c85ef#{to_hex(interpolated['round'].to_i)}",
               "value" => "0x#{final_value.to_s(16)}",
+              "gas" => "0x30d40",
               "gasPrice" => "#{eth_gasPrice(internal)}"
             }
           ],
@@ -1012,6 +1011,7 @@ module Agents
               "from" => "#{interpolated['wallet']}",
               "to" => "0x08A7c8be47773546DC5E173d67B0c38AfFfa4b84",
               "data" => "0xcd948855",
+              "gas" => "0x30d40",
               "gasPrice" => "#{eth_gasPrice(internal)}"
             }
           ],
@@ -1722,7 +1722,13 @@ module Agents
       else
         output = JSON.parse(response.body)
 
+#        gas_price = output['result'].to_i(16)
+#        gas_price += 1000000000000
+#        formatted_gas_price = "0x" + gas_price.to_s(16)
+#
         return output['result']
+#        return formatted_gas_price
+
 
       end
     end
