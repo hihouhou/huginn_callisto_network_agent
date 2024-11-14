@@ -268,7 +268,7 @@ module Agents
       end
     end
 
-    def dao_vote_id(id,internal=false)
+    def dao_vote_id(id,internal=true)
 
       if interpolated['debug'] == 'true'
         log "unlocking the wallet"
@@ -306,12 +306,9 @@ module Agents
 
         payload = JSON.parse(response.body)
 
-        if internal == false
+        if interpolated['emit_events'] == 'true'
           create_event payload: payload
-        else
-          return payload['result']
         end
-      else
       end
 
     end
@@ -1681,7 +1678,7 @@ module Agents
       end
     end
 
-    def eth_gasPrice(internal=false)
+    def eth_gasPrice(internal="false")
 
       uri = URI.parse("#{interpolated['rpc_server']}")
       request = Net::HTTP::Post.new(uri)
@@ -1705,16 +1702,18 @@ module Agents
 
       payload = JSON.parse(response.body)
 
-      if internal == false
+      if internal == "false"
         if interpolated['changes_only'] == 'true'
-          if payload.to_s != memory['eth_gasPrice']
-            memory['eth_gasPrice'] = payload.to_s
+          if payload != memory['eth_gasPrice']
+            memory['eth_gasPrice'] = payload
             payload['result'] = payload['result'].to_i(16)
             create_event payload: payload
+          else
+            log "no diff"
           end
         else
-          if payload.to_s != memory['eth_gasPrice']
-            memory['eth_gasPrice'] = payload.to_s
+          if payload != memory['eth_gasPrice']
+            memory['eth_gasPrice'] = payload
           end
           payload['result'] = payload['result'].to_i(16)
           create_event payload: payload
@@ -1722,13 +1721,7 @@ module Agents
       else
         output = JSON.parse(response.body)
 
-#        gas_price = output['result'].to_i(16)
-#        gas_price += 1000000000000
-#        formatted_gas_price = "0x" + gas_price.to_s(16)
-#
         return output['result']
-#        return formatted_gas_price
-
 
       end
     end
