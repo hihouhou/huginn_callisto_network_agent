@@ -365,6 +365,7 @@ module Agents
     end
 
     def dao_claim(id)
+      internal = "true"
       if interpolated['debug'] == 'true'
         log "unlocking the wallet"
       end
@@ -559,7 +560,7 @@ module Agents
 
     def callosha_slots()
 
-      internal = true
+      internal = "true"
       contract = "0x7777265DC7FD2a15A7f2E8d8Ad87b3DAec677777"
       power_of_10 = 18
       final_value = interpolated['value'].to_i * 10**power_of_10
@@ -935,7 +936,7 @@ module Agents
     end
 
     def start_cs_clo()
-      internal = true
+      internal = "true"
       if interpolated['debug'] == 'true'
         log "unlocking the wallet"
       end
